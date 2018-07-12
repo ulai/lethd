@@ -67,6 +67,7 @@
 		ED19DD1420F7C3B50012DE7E /* analogio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = analogio.cpp; sourceTree = "<group>"; };
 		ED19DD1520F7C3B60012DE7E /* pwm.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = pwm.hpp; sourceTree = "<group>"; };
 		ED19DD1620F7C3B60012DE7E /* pwm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pwm.cpp; sourceTree = "<group>"; };
+		ED19DD1A20F8AEA00012DE7E /* configure.ac */ = {isa = PBXFileReference; lastKnownFileType = text; path = configure.ac; sourceTree = "<group>"; };
 		ED53725C1DFC28D00066FF5A /* lethd */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = lethd; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED5372671DFC2CBE0066FF5A /* application.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = application.cpp; sourceTree = "<group>"; };
 		ED5372681DFC2CBE0066FF5A /* application.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = application.hpp; sourceTree = "<group>"; };
@@ -159,6 +160,7 @@
 		ED5372531DFC28D00066FF5A = {
 			isa = PBXGroup;
 			children = (
+				ED19DD1A20F8AEA00012DE7E /* configure.ac */,
 				EDBB9DAB1F435BD600765F95 /* Makefile.am */,
 				ED53725E1DFC28D00066FF5A /* src */,
 				ED53725D1DFC28D00066FF5A /* Products */,
