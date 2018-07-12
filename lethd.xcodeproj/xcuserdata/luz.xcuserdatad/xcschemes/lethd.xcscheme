@@ -33,9 +33,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "ED53725B1DFC28D00066FF5A"
-            BuildableName = "p44banditd"
-            BlueprintName = "p44banditd"
-            ReferencedContainer = "container:p44banditd.xcodeproj">
+            BuildableName = "lethd"
+            BlueprintName = "lethd"
+            ReferencedContainer = "container:lethd.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <AdditionalOptions>
@@ -56,9 +56,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "ED53725B1DFC28D00066FF5A"
-            BuildableName = "p44banditd"
-            BlueprintName = "p44banditd"
-            ReferencedContainer = "container:p44banditd.xcodeproj">
+            BuildableName = "lethd"
+            BlueprintName = "lethd"
+            ReferencedContainer = "container:lethd.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <CommandLineArguments>
@@ -67,7 +67,11 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--datadir &quot;/Users/luz/Documents/plan44/Projekte/CNC-Fra&#x308;se mit Bandit Steuerung - mafi a-faire/test-datadir&quot;"
+            argument = "--sensor spi327661.MCP3002@0.0"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--datapath /tmp/lethd"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument

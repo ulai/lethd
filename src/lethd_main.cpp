@@ -20,7 +20,8 @@
 //
 
 #include "application.hpp"
-
+#include "digitalio.hpp"
+#include "analogio.hpp"
 #include "jsoncomm.hpp"
 
 #include <dirent.h>
@@ -46,6 +47,8 @@ class LEthD : public CmdLineApp
   IndicatorOutputPtr greenLed;
   IndicatorOutputPtr redLed;
 
+  AnalogIoPtr sensor;
+
   MLMicroSeconds starttime;
 
 public:
@@ -60,6 +63,9 @@ public:
     const char *usageText =
       "Usage: %1$s [options]\n";
     const CmdLineOptionDescriptor options[] = {
+      { 0  , "pwmdimmer",      true,  "pinspec;PWM dimmer output pin" },
+      { 0  , "sensor",         true,  "pinspec;analog sensor input to use" },
+      { 0  , "ledchain",       true,  "devicepath;ledchain device to use" },
       { 0  , "jsonapiport",    true,  "port;server port number for JSON API (default=none)" },
       { 0  , "jsonapinonlocal",false, "allow JSON API from non-local clients" },
       { 0  , "button",         true,  "input pinspec; device button" },
@@ -68,7 +74,7 @@ public:
       { 'l', "loglevel",       true,  "level;set max level of log message detail to show on stdout" },
       { 0  , "errlevel",       true,  "level;set max level for log messages to go to stderr as well" },
       { 0  , "dontlogerrors",  false, "don't duplicate error messages (see --errlevel) on stdout" },
-      { 0  , "deltatstamps",  false, "show timestamp delta between log lines" },
+      { 0  , "deltatstamps",   false, "show timestamp delta between log lines" },
       { 'r', "resourcepath",   true,  "path;path to the images and sounds folders" },
       { 'd', "datapath",       true,  "path;path to the r/w persistent data" },
       { 'h', "help",           false, "show this text" },
@@ -98,9 +104,12 @@ public:
       // create button input
       button = ButtonInputPtr(new ButtonInput(getOption("button","missing")));
       button->setButtonHandler(boost::bind(&LEthD::buttonHandler, this, _1, _2, _3), true, Second);
-      // - create LEDs
+      // create LEDs
       greenLed = IndicatorOutputPtr(new IndicatorOutput(getOption("greenled","missing")));
       redLed = IndicatorOutputPtr(new IndicatorOutput(getOption("redled","missing")));
+
+      // create sensor input
+      sensor =  AnalogIoPtr(new AnalogIo(getOption("sensor","missing"), false, 0));
 
       // - create and start API server and wait for things to happen
       string apiport;
@@ -122,6 +131,8 @@ public:
   virtual void initialize()
   {
     LOG(LOG_NOTICE, "lethd initialize()");
+    LOG(LOG_NOTICE, "sensor input returns %.1f", sensor->value());
+    terminateApp(EXIT_FAILURE);
   }
 
 

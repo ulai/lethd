@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		ED19DD0820F793030012DE7E /* lethd_main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED19DD0720F793030012DE7E /* lethd_main.cpp */; };
+		ED19DD1220F797DA0012DE7E /* civetweb.c in Sources */ = {isa = PBXBuildFile; fileRef = ED19DD0E20F797DA0012DE7E /* civetweb.c */; };
+		ED19DD1720F7C3B60012DE7E /* analogio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED19DD1420F7C3B50012DE7E /* analogio.cpp */; };
+		ED19DD1820F7C3B60012DE7E /* pwm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED19DD1620F7C3B60012DE7E /* pwm.cpp */; };
 		ED53729B1DFC2CBE0066FF5A /* application.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED5372671DFC2CBE0066FF5A /* application.cpp */; };
 		ED53729C1DFC2CBE0066FF5A /* colorutils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED5372691DFC2CBE0066FF5A /* colorutils.cpp */; };
 		ED53729D1DFC2CBE0066FF5A /* consolekey.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED53726B1DFC2CBE0066FF5A /* consolekey.cpp */; };
@@ -33,7 +36,6 @@
 		ED5372B11DFC2CBE0066FF5A /* spi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED5372951DFC2CBE0066FF5A /* spi.cpp */; };
 		ED5372B21DFC2CBE0066FF5A /* sqlite3persistence.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED5372971DFC2CBE0066FF5A /* sqlite3persistence.cpp */; };
 		ED5372B31DFC2CBE0066FF5A /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED5372991DFC2CBE0066FF5A /* utils.cpp */; };
-		ED5372D51DFC9F720066FF5A /* mongoose.c in Sources */ = {isa = PBXBuildFile; fileRef = ED5372B71DFC9F650066FF5A /* mongoose.c */; };
 		ED5372D61DFC9FC60066FF5A /* sqlite3ppext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED5372CB1DFC9F650066FF5A /* sqlite3ppext.cpp */; };
 		ED5372D71DFC9FC90066FF5A /* sqlite3pp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED5372C91DFC9F650066FF5A /* sqlite3pp.cpp */; };
 		ED5372DA1DFCA0CC0066FF5A /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = ED5372D91DFCA0CC0066FF5A /* libsqlite3.tbd */; };
@@ -54,6 +56,17 @@
 
 /* Begin PBXFileReference section */
 		ED19DD0720F793030012DE7E /* lethd_main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = lethd_main.cpp; sourceTree = "<group>"; };
+		ED19DD0B20F797DA0012DE7E /* civetweb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = civetweb.h; sourceTree = "<group>"; };
+		ED19DD0C20F797DA0012DE7E /* openssl_hostname_validation.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = openssl_hostname_validation.inl; sourceTree = "<group>"; };
+		ED19DD0D20F797DA0012DE7E /* hostcheck.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = hostcheck.inl; sourceTree = "<group>"; };
+		ED19DD0E20F797DA0012DE7E /* civetweb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = civetweb.c; sourceTree = "<group>"; };
+		ED19DD0F20F797DA0012DE7E /* md5.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = md5.inl; sourceTree = "<group>"; };
+		ED19DD1020F797DA0012DE7E /* sha1.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sha1.inl; sourceTree = "<group>"; };
+		ED19DD1120F797DA0012DE7E /* handle_form.inl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = handle_form.inl; sourceTree = "<group>"; };
+		ED19DD1320F7C3B50012DE7E /* analogio.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = analogio.hpp; sourceTree = "<group>"; };
+		ED19DD1420F7C3B50012DE7E /* analogio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = analogio.cpp; sourceTree = "<group>"; };
+		ED19DD1520F7C3B60012DE7E /* pwm.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = pwm.hpp; sourceTree = "<group>"; };
+		ED19DD1620F7C3B60012DE7E /* pwm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pwm.cpp; sourceTree = "<group>"; };
 		ED53725C1DFC28D00066FF5A /* lethd */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = lethd; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED5372671DFC2CBE0066FF5A /* application.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = application.cpp; sourceTree = "<group>"; };
 		ED5372681DFC2CBE0066FF5A /* application.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = application.hpp; sourceTree = "<group>"; };
@@ -107,9 +120,6 @@
 		ED5372981DFC2CBE0066FF5A /* sqlite3persistence.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = sqlite3persistence.hpp; sourceTree = "<group>"; };
 		ED5372991DFC2CBE0066FF5A /* utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = utils.cpp; sourceTree = "<group>"; };
 		ED53729A1DFC2CBE0066FF5A /* utils.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = utils.hpp; sourceTree = "<group>"; };
-		ED5372B61DFC9F650066FF5A /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
-		ED5372B71DFC9F650066FF5A /* mongoose.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = mongoose.c; sourceTree = "<group>"; };
-		ED5372B81DFC9F650066FF5A /* mongoose.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mongoose.h; sourceTree = "<group>"; };
 		ED5372C91DFC9F650066FF5A /* sqlite3pp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = sqlite3pp.cpp; sourceTree = "<group>"; };
 		ED5372CA1DFC9F650066FF5A /* sqlite3pp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sqlite3pp.h; sourceTree = "<group>"; };
 		ED5372CB1DFC9F650066FF5A /* sqlite3ppext.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = sqlite3ppext.cpp; sourceTree = "<group>"; };
@@ -132,6 +142,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		ED19DD0920F797DA0012DE7E /* civetweb */ = {
+			isa = PBXGroup;
+			children = (
+				ED19DD0E20F797DA0012DE7E /* civetweb.c */,
+				ED19DD0B20F797DA0012DE7E /* civetweb.h */,
+				ED19DD0C20F797DA0012DE7E /* openssl_hostname_validation.inl */,
+				ED19DD0D20F797DA0012DE7E /* hostcheck.inl */,
+				ED19DD0F20F797DA0012DE7E /* md5.inl */,
+				ED19DD1020F797DA0012DE7E /* sha1.inl */,
+				ED19DD1120F797DA0012DE7E /* handle_form.inl */,
+			);
+			path = civetweb;
+			sourceTree = "<group>";
+		};
 		ED5372531DFC28D00066FF5A = {
 			isa = PBXGroup;
 			children = (
@@ -163,6 +187,10 @@
 			isa = PBXGroup;
 			children = (
 				ED5372B41DFC9F650066FF5A /* thirdparty */,
+				ED19DD1420F7C3B50012DE7E /* analogio.cpp */,
+				ED19DD1320F7C3B50012DE7E /* analogio.hpp */,
+				ED19DD1620F7C3B60012DE7E /* pwm.cpp */,
+				ED19DD1520F7C3B60012DE7E /* pwm.hpp */,
 				ED5372671DFC2CBE0066FF5A /* application.cpp */,
 				ED5372681DFC2CBE0066FF5A /* application.hpp */,
 				ED5372691DFC2CBE0066FF5A /* colorutils.cpp */,
@@ -224,20 +252,10 @@
 		ED5372B41DFC9F650066FF5A /* thirdparty */ = {
 			isa = PBXGroup;
 			children = (
-				ED5372B51DFC9F650066FF5A /* mongoose */,
+				ED19DD0920F797DA0012DE7E /* civetweb */,
 				ED5372C81DFC9F650066FF5A /* sqlite3pp */,
 			);
 			path = thirdparty;
-			sourceTree = "<group>";
-		};
-		ED5372B51DFC9F650066FF5A /* mongoose */ = {
-			isa = PBXGroup;
-			children = (
-				ED5372B61DFC9F650066FF5A /* LICENSE */,
-				ED5372B71DFC9F650066FF5A /* mongoose.c */,
-				ED5372B81DFC9F650066FF5A /* mongoose.h */,
-			);
-			path = mongoose;
 			sourceTree = "<group>";
 		};
 		ED5372C81DFC9F650066FF5A /* sqlite3pp */ = {
@@ -318,6 +336,7 @@
 			files = (
 				ED5372A81DFC2CBE0066FF5A /* jsonwebclient.cpp in Sources */,
 				ED5372A11DFC2CBE0066FF5A /* gpio.cpp in Sources */,
+				ED19DD1220F797DA0012DE7E /* civetweb.c in Sources */,
 				ED5372AE1DFC2CBE0066FF5A /* serialcomm.cpp in Sources */,
 				ED53729B1DFC2CBE0066FF5A /* application.cpp in Sources */,
 				ED5372AC1DFC2CBE0066FF5A /* p44obj.cpp in Sources */,
@@ -326,8 +345,8 @@
 				ED53729C1DFC2CBE0066FF5A /* colorutils.cpp in Sources */,
 				ED53729F1DFC2CBE0066FF5A /* error.cpp in Sources */,
 				ED5372B21DFC2CBE0066FF5A /* sqlite3persistence.cpp in Sources */,
-				ED5372D51DFC9F720066FF5A /* mongoose.c in Sources */,
 				ED5372D61DFC9FC60066FF5A /* sqlite3ppext.cpp in Sources */,
+				ED19DD1820F7C3B60012DE7E /* pwm.cpp in Sources */,
 				ED5372A61DFC2CBE0066FF5A /* jsonobject.cpp in Sources */,
 				ED5372B01DFC2CBE0066FF5A /* socketcomm.cpp in Sources */,
 				ED19DD0820F793030012DE7E /* lethd_main.cpp in Sources */,
@@ -346,6 +365,7 @@
 				ED5372A01DFC2CBE0066FF5A /* fdcomm.cpp in Sources */,
 				ED53729D1DFC2CBE0066FF5A /* consolekey.cpp in Sources */,
 				ED53729E1DFC2CBE0066FF5A /* digitalio.cpp in Sources */,
+				ED19DD1720F7C3B60012DE7E /* analogio.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -355,7 +375,7 @@
 		ED5372611DFC28D00066FF5A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -370,14 +390,13 @@
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_SUSPICIOUS_MOVES = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_TESTABILITY = YES;
+				ENABLE_TESTABILITY = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -394,19 +413,12 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					/usr/local/include,
-					"/usr/local/include/json-c",
 					"$(PROJECT_DIR)/src",
-					"$(PROJECT_DIR)/src/p44utils",
-					"$(PROJECT_DIR)/src/p44utils/thirdparty",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
-				MACOSX_DEPLOYMENT_TARGET = 10.12;
-				MTL_ENABLE_DEBUG_INFO = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = (
-					"-ljson-c",
-					"-lpng",
-				);
+				OTHER_LDFLAGS = "-ljson-c";
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -414,7 +426,7 @@
 		ED5372621DFC28D00066FF5A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -429,7 +441,6 @@
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_SUSPICIOUS_MOVES = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "-";
@@ -437,6 +448,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -447,18 +459,11 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					/usr/local/include,
-					"/usr/local/include/json-c",
 					"$(PROJECT_DIR)/src",
-					"$(PROJECT_DIR)/src/p44utils",
-					"$(PROJECT_DIR)/src/p44utils/thirdparty",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
-				MACOSX_DEPLOYMENT_TARGET = 10.12;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = (
-					"-ljson-c",
-					"-lpng",
-				);
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				OTHER_LDFLAGS = "-ljson-c";
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -466,6 +471,16 @@
 		ED5372641DFC28D00066FF5A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"/usr/local/include/json-c",
+					"$(PROJECT_DIR)/src/p44utils/thirdparty",
+					/usr/local/Cellar/openssl/1.0.2k/include,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/Cellar/openssl/1.0.2k/lib,
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -473,6 +488,16 @@
 		ED5372651DFC28D00066FF5A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"/usr/local/include/json-c",
+					"$(PROJECT_DIR)/src/p44utils/thirdparty",
+					/usr/local/Cellar/openssl/1.0.2k/include,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/Cellar/openssl/1.0.2k/lib,
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
