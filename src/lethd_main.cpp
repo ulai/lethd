@@ -23,6 +23,7 @@
 #include "digitalio.hpp"
 #include "analogio.hpp"
 #include "jsoncomm.hpp"
+#include "ledchaincomm.hpp"
 
 #include <dirent.h>
 
@@ -48,8 +49,12 @@ class LEthD : public CmdLineApp
   IndicatorOutputPtr redLed;
 
   AnalogIoPtr sensor;
+  AnalogIoPtr pwmDimmer;
+  LEDChainCommPtr ledChain;
 
   MLMicroSeconds starttime;
+
+  MLTicket sampleTicket;
 
 public:
 
@@ -110,7 +115,14 @@ public:
 
       // create sensor input
       sensor =  AnalogIoPtr(new AnalogIo(getOption("sensor","missing"), false, 0));
-
+      // create PWM output
+      pwmDimmer = AnalogIoPtr(new AnalogIo(getOption("pwmdimmer","missing"), true, 0)); // off to begin with
+      // create LED chain output
+      string ledChainDev;
+      if (getStringOption("ledchain", ledChainDev)) {
+        ledChain = LEDChainCommPtr(new LEDChainComm(LEDChainComm::ledtype_ws281x, ledChainDev, 504, 72, false, true)); // 72 LEDs per row, not reversedX, alternating
+        ledChain->begin();
+      }
       // - create and start API server and wait for things to happen
       string apiport;
       if (getStringOption("jsonapiport", apiport)) {
@@ -131,8 +143,32 @@ public:
   virtual void initialize()
   {
     LOG(LOG_NOTICE, "lethd initialize()");
-    LOG(LOG_NOTICE, "sensor input returns %.1f", sensor->value());
-    terminateApp(EXIT_FAILURE);
+    sampleTicket.executeOnce(boost::bind(&LEthD::demoSample, this, _1));
+  }
+
+
+  void demoSample(MLTimer &aTimer)
+  {
+    double ad = sensor->value();
+    LOG(LOG_INFO, "A/D sample value = %.0f", ad);
+    // adjust PWM
+    if (pwmDimmer) pwmDimmer->setValue(ad/1024*100);
+    // show LED bar
+    if (ledChain) {
+      const int numLeds = 10;
+      int onLeds = ad/1024*numLeds;
+      LOG(LOG_INFO, "onLeds=%d", onLeds);
+      for (int i=0; i<numLeds; i++) {
+        if (i<=onLeds) {
+          ledChain->setColor(i, 255, 255-(255*i/numLeds), 0);
+        }
+        else {
+          ledChain->setColor(i, 0, 50, 0);
+        }
+      }
+      ledChain->show();
+    }
+    MainLoop::currentMainLoop().retriggerTimer(aTimer, 333*MilliSecond);
   }
 
 
