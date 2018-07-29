@@ -25,6 +25,8 @@
 #include "jsoncomm.hpp"
 #include "ledchaincomm.hpp"
 
+#include "textview.hpp"
+
 #include <dirent.h>
 
 using namespace p44;
@@ -33,6 +35,15 @@ using namespace p44;
 
 
 // MARK: ==== Application
+
+#ifdef __APPLE__
+#define LED_MODULE_COLS 20
+#define LED_MODULE_ROWS 7
+#else
+#define LED_MODULE_COLS 72
+#define LED_MODULE_ROWS 7
+#endif
+
 
 typedef boost::function<void (JsonObjectPtr aResponse, ErrorPtr aError)> RequestDoneCB;
 
@@ -48,9 +59,12 @@ class LEthD : public CmdLineApp
   IndicatorOutputPtr greenLed;
   IndicatorOutputPtr redLed;
 
-  AnalogIoPtr sensor;
+  AnalogIoPtr sensor0;
+  AnalogIoPtr sensor1;
   AnalogIoPtr pwmDimmer;
   LEDChainCommPtr ledChain;
+
+  TextViewPtr message;
 
   MLMicroSeconds starttime;
 
@@ -69,7 +83,8 @@ public:
       "Usage: %1$s [options]\n";
     const CmdLineOptionDescriptor options[] = {
       { 0  , "pwmdimmer",      true,  "pinspec;PWM dimmer output pin" },
-      { 0  , "sensor",         true,  "pinspec;analog sensor input to use" },
+      { 0  , "sensor0",        true,  "pinspec;analog sensor0 input to use" },
+      { 0  , "sensor1",        true,  "pinspec;analog sensor1 input to use" },
       { 0  , "ledchain",       true,  "devicepath;ledchain device to use" },
       { 0  , "jsonapiport",    true,  "port;server port number for JSON API (default=none)" },
       { 0  , "jsonapinonlocal",false, "allow JSON API from non-local clients" },
@@ -113,14 +128,15 @@ public:
       greenLed = IndicatorOutputPtr(new IndicatorOutput(getOption("greenled","missing")));
       redLed = IndicatorOutputPtr(new IndicatorOutput(getOption("redled","missing")));
 
-      // create sensor input
-      sensor =  AnalogIoPtr(new AnalogIo(getOption("sensor","missing"), false, 0));
+      // create sensor input(s)
+      sensor0 =  AnalogIoPtr(new AnalogIo(getOption("sensor0","missing"), false, 0));
+      sensor1 =  AnalogIoPtr(new AnalogIo(getOption("sensor1","missing"), false, 0));
       // create PWM output
       pwmDimmer = AnalogIoPtr(new AnalogIo(getOption("pwmdimmer","missing"), true, 0)); // off to begin with
       // create LED chain output
       string ledChainDev;
       if (getStringOption("ledchain", ledChainDev)) {
-        ledChain = LEDChainCommPtr(new LEDChainComm(LEDChainComm::ledtype_ws281x, ledChainDev, 504, 72, false, true)); // 72 LEDs per row, not reversedX, alternating
+        ledChain = LEDChainCommPtr(new LEDChainComm(LEDChainComm::ledtype_ws281x, ledChainDev, LED_MODULE_COLS*LED_MODULE_ROWS, LED_MODULE_COLS, false, true)); // 72 LEDs per row, not reversedX, alternating
         ledChain->begin();
       }
       // - create and start API server and wait for things to happen
@@ -131,43 +147,74 @@ public:
         apiServer->setAllowNonlocalConnections(getOption("jsonapinonlocal"));
         apiServer->startServer(boost::bind(&LEthD::apiConnectionHandler, this, _1), 3);
       }
-
-
     } // if !terminated
     // app now ready to run (or cleanup when already terminated)
     return run();
   }
 
 
-
   virtual void initialize()
   {
     LOG(LOG_NOTICE, "lethd initialize()");
-    sampleTicket.executeOnce(boost::bind(&LEthD::demoSample, this, _1));
+    if (ledChain) {
+      message = TextViewPtr(new TextView(0, 0, LED_MODULE_COLS, View::right));
+      message->setBackGroundColor(black); // not transparent!
+      message->setText("Hello World", true);
+      MainLoop::currentMainLoop().executeNow(boost::bind(&LEthD::step, this, _1));
+    }
+//    // start sampling
+//    sampleTicket.executeOnce(boost::bind(&LEthD::demoSample, this, _1));
   }
+
+
+  void step(MLTimer &aTimer)
+  {
+    if (message) {
+      message->step();
+      updateDisplay();
+    }
+    MainLoop::currentMainLoop().retriggerTimer(aTimer, 10*MilliSecond);
+  }
+
+
+  void updateDisplay()
+  {
+    if (message && message->isDirty()) {
+      for (int x=0; x<LED_MODULE_COLS; x++) {
+        for (int y=0; y<LED_MODULE_ROWS; y++) {
+          PixelColor p = message->colorAt(x, y);
+          PixelColor dp = dimPixel(p, p.a);
+          ledChain->setColorXY(x, y, dp.r, dp.g, dp.b);
+        }
+      }
+      ledChain->show();
+      message->updated();
+    }
+  }
+
 
 
   void demoSample(MLTimer &aTimer)
   {
-    double ad = sensor->value();
+    double ad = sensor0->value();
     LOG(LOG_INFO, "A/D sample value = %.0f", ad);
     // adjust PWM
     if (pwmDimmer) pwmDimmer->setValue(ad/1024*100);
-    // show LED bar
-    if (ledChain) {
-      const int numLeds = 10;
-      int onLeds = ad/1024*numLeds;
-      LOG(LOG_INFO, "onLeds=%d", onLeds);
-      for (int i=0; i<numLeds; i++) {
-        if (i<=onLeds) {
-          ledChain->setColor(i, 255, 255-(255*i/numLeds), 0);
-        }
-        else {
-          ledChain->setColor(i, 0, 50, 0);
-        }
-      }
-      ledChain->show();
-    }
+//    // show LED bar
+//    if (ledChain) {
+//      const int numLeds = 10;
+//      int onLeds = ad/1024*numLeds;
+//      LOG(LOG_INFO, "onLeds=%d", onLeds);
+//      for (int i=0; i<numLeds; i++) {
+//        if (i<=onLeds) {
+//          ledChain->setColor(i, 255, 255-(255*i/numLeds), 0);
+//        }
+//        else {
+//          ledChain->setColor(i, 0, 50, 0);
+//        }
+//      }
+//      ledChain->show();
+//    }
     MainLoop::currentMainLoop().retriggerTimer(aTimer, 333*MilliSecond);
   }
 
@@ -267,126 +314,64 @@ public:
   bool processRequest(string aUri, JsonObjectPtr aData, bool aIsAction, RequestDoneCB aRequestDoneCB)
   {
     ErrorPtr err;
-    /*
     JsonObjectPtr o;
-    if (aUri=="files") {
-      // return a list of files
-      string action;
-      if (!aData->get("action", o)) {
-        aIsAction = false;
-      }
-      else {
-        action = o->stringValue();
-      }
-      if (!aIsAction) {
-        DIR *dirP = opendir (datadir.c_str());
-        struct dirent *direntP;
-        if (dirP==NULL) {
-          err = SysError::errNo("Cannot read data directory: ");
+    if (aUri=="brightness") {
+      JsonObjectPtr answer;
+      if (aIsAction) {
+        // set
+        if (message && aData->get("text", o)) {
+          // text brightness
+          message->setAlpha(o->doubleValue()/100*255);
         }
-        else {
-          JsonObjectPtr files = JsonObject::newArray();
-          bool foundSelected = false;
-          while ((direntP = readdir(dirP))!=NULL) {
-            string fn = direntP->d_name;
-            if (fn=="." || fn=="..") continue;
-            JsonObjectPtr file = JsonObject::newObj();
-            file->add("name", JsonObject::newString(fn));
-            file->add("ino", JsonObject::newInt64(direntP->d_ino));
-            file->add("type", JsonObject::newInt64(direntP->d_type));
-            if (fn==selectedfile) foundSelected = true;
-            file->add("selected", JsonObject::newBool(fn==selectedfile));
-            files->arrayAppend(file);
+        if (pwmDimmer && aData->get("light", o)) {
+          // light brightness
+          pwmDimmer->setValue(o->doubleValue());
+        }
+      }
+      // get
+      answer = JsonObject::newObj();
+      if (message) answer->add("text", JsonObject::newInt32((double)(message->getAlpha())/255.0*100));
+      if (pwmDimmer) answer->add("light", JsonObject::newDouble(pwmDimmer->value()));
+      aRequestDoneCB(answer, ErrorPtr());
+      return true;
+    }
+    else if (aUri=="text") {
+      if (aIsAction) {
+        if (aData->get("message", o)) {
+          if (message) message->setText(o->stringValue(), true);
+          aRequestDoneCB(JsonObjectPtr(), ErrorPtr());
+          return true;
+        }
+        else if (aData->get("color", o)) {
+          // webcolor
+          string webcolor = o->stringValue();
+          uint32_t col;
+          if (message && sscanf(webcolor.c_str(),"%x",&col)==1) {
+            PixelColor p;
+            if (webcolor.size()<7)
+              p.a = message->getAlpha();
+            else
+              p.a = (col>>24) & 0xFF;
+            p.r = (col>>16) & 0xFF;
+            p.g = (col>>8) & 0xFF;
+            p.b = col & 0xFF;
+            message->setTextColor(p);
           }
-          closedir (dirP);
-          if (!foundSelected) selectedfile.clear(); // remove selection not matching any of the existing files
-          aRequestDoneCB(files, ErrorPtr());
+          aRequestDoneCB(JsonObjectPtr(), ErrorPtr());
           return true;
         }
       }
-      else {
-        // a file action
-        if (!aData->get("name", o)) {
-          err = WebError::webErr(400, "Missing 'name'");
-        }
-        else {
-          // addressing a particular file
-          // - try to open to see if it exists
-          string filename = o->c_strValue();
-          string filepath = datadir;
-          pathstring_format_append(filepath, "%s", filename.c_str());
-          FILE *fileP = fopen(filepath.c_str(),"r");
-          if (fileP==NULL) {
-            err = WebError::webErr(404, "File '%s' not found", filename.c_str());
-          }
-          else {
-            // exists
-            fclose(fileP);
-            if (action=="rename") {
-              // rename file
-              if (!aData->get("newname", o)) {
-                err = WebError::webErr(400, "Missing 'newname'");
-              }
-              else {
-                string newname = o->stringValue();
-                if (newname.size()<3) {
-                  err = WebError::webErr(415, "'newname' is too short (min 3 characters)");
-                }
-                else {
-                  string newpath = datadir;
-                  pathstring_format_append(newpath, "%s", newname.c_str());
-                  if (rename(filepath.c_str(), newpath.c_str())!=0) {
-                    err = SysError::errNo("Cannot rename file: ");
-                  }
-                }
-              }
-            }
-//              else if (action=="download") {
-//
-//              }
-            else if (action=="delete") {
-              if (unlink(filepath.c_str())!=0) {
-                err = SysError::errNo("Cannot delete file: ");
-              }
-            }
-            else if (action=="select") {
-              if (selectedfile==filename) {
-                selectedfile.clear(); // unselect
-              }
-              else {
-                selectedfile = filename; // select
-              }
-            }
-            else if (action=="send") {
-              err = sendFile(filepath);
-            }
-            else {
-              err = WebError::webErr(400, "Unknown files action");
-            }
-          }
-        }
+    }
+    else if (aUri=="inputs") {
+      if (!aIsAction) {
+        JsonObjectPtr answer = JsonObject::newObj();
+        if (sensor0) answer->add("sensor0", JsonObject::newInt32(sensor0->value()));
+        if (sensor1) answer->add("sensor1", JsonObject::newInt32(sensor1->value()));
+        aRequestDoneCB(answer, ErrorPtr());
+        return true;
+
       }
-      actionStatus(aRequestDoneCB, err);
-      return true;
     }
-    else if (aIsAction && aUri=="log") {
-      if (aData->get("level", o)) {
-        int lvl = o->int32Value();
-        LOG(LOG_NOTICE, "\n====== Changed Log Level from %d to %d\n", LOGLEVEL, lvl);
-        SETLOGLEVEL(lvl);
-      }
-      actionStatus(aRequestDoneCB, err);
-      return true;
-    }
-    else if (aUri=="/") {
-      string uploadedfile;
-      string cmd;
-      if (aData->get("uploadedfile", o))
-        uploadedfile = o->stringValue();
-      if (aData->get("cmd", o))
-        cmd = o->stringValue();
-    }
-    */
     return false;
   }
 

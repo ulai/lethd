@@ -67,7 +67,11 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--sensor spi327661.MCP3002@0.0"
+            argument = "--ledchain /tmp/ledchainsim"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--sensor0 spi0.MCP3002@0.0"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument

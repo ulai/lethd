@@ -116,4 +116,12 @@ lethd_SOURCES = \
   src/p44utils/thirdparty/civetweb/hostcheck.inl \
   src/p44utils/thirdparty/civetweb/openssl_hostname_validation.inl \
   src/p44utils/p44utils_common.hpp \
+  src/view.cpp \
+  src/view.hpp \
+  src/textview.cpp \
+  src/textview.hpp \
+  src/viewstack.cpp \
+  src/viewstack.hpp \
+  src/viewanimator.cpp \
+  src/viewanimator.hpp \
   src/lethd_main.cpp
