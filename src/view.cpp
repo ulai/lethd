@@ -256,5 +256,35 @@ void p44::addToPixel(PixelColor &aPixel, PixelColor aIncrease)
 }
 
 
+PixelColor p44::webColorToPixel(const string aWebColor)
+{
+  PixelColor res = transparent;
+  size_t i = 0;
+  if (i>0 && aWebColor[0]=='#') i++; // skip optional #
+  size_t n = aWebColor.size()-i;
+  uint32_t h;
+  if (sscanf(aWebColor.c_str()+i, "%x", &h)==1) {
+    if (n<=4) {
+      // short form RGB or ARGB
+      res.a = 255;
+      if (n==4) { res.a = (h>>12)&0xF; res.a |= res.a<<4; }
+      res.r = (h>>8)&0xF; res.r |= res.r<<4;
+      res.g = (h>>4)&0xF; res.g |= res.g<<4;
+      res.b = (h>>0)&0xF; res.b |= res.b<<4;
+    }
+    else {
+      // long form RRGGBB or AARRGGBB
+      res.a = 255;
+      if (n==8) { res.a = (h>>24)&0xFF; }
+      res.r = (h>>16)&0xFF;
+      res.g = (h>>8)&0xFF;
+      res.b = (h>>0)&0xFF;
+    }
+  }
+  return res;
+}
+
+
+
 
 

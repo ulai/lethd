@@ -45,6 +45,11 @@ namespace p44 {
   void addToPixel(PixelColor &aPixel, PixelColor aIncrease);
   void overlayPixel(PixelColor &aPixel, PixelColor aOverlay);
 
+  /// convert Web color to pixel color
+  /// @param aWebColor: web style #ARGB or #AARRGGBB color, alpha (A, AA) is optional, "#" is also optional
+  /// @return pixel color. If Alpha is not specified, it is set to fully opaque = 255.
+  PixelColor webColorToPixel(const string aWebColor);
+
   class View : public P44Obj
   {
     friend class ViewStack;
