@@ -36,14 +36,13 @@ using namespace p44;
 
 // MARK: ==== Application
 
-#ifdef __APPLE__
-#define LED_MODULE_COLS 20
-#define LED_MODULE_ROWS 7
-#else
-#define LED_MODULE_COLS 72
-#define LED_MODULE_ROWS 7
-#endif
+#define MKSTR(s) _MKSTR(s)
+#define _MKSTR(s) #s
 
+#define LED_MODULE_COLS 74
+#define LED_MODULE_ROWS 7
+#define LED_MODULE_BORDER_LEFT 1
+#define LED_MODULE_BORDER_RIGHT 1
 
 typedef boost::function<void (JsonObjectPtr aResponse, ErrorPtr aError)> RequestDoneCB;
 
@@ -62,7 +61,14 @@ class LEthD : public CmdLineApp
   AnalogIoPtr sensor0;
   AnalogIoPtr sensor1;
   AnalogIoPtr pwmDimmer;
+
+  // LED chain
   LEDChainCommPtr ledChain;
+  int ledRows;
+  int ledCols;
+  int ledBorderRight;
+  int ledBorderLeft;
+  int ledOrientation;
 
   TextViewPtr message;
 
@@ -86,6 +92,11 @@ public:
       { 0  , "sensor0",        true,  "pinspec;analog sensor0 input to use" },
       { 0  , "sensor1",        true,  "pinspec;analog sensor1 input to use" },
       { 0  , "ledchain",       true,  "devicepath;ledchain device to use" },
+      { 0  , "ledrows",        true,  "rows;number of LED rows (default=" MKSTR(LED_MODULE_ROWS)  ")" },
+      { 0  , "ledcols",        true,  "columns;total number of LED columns (default=" MKSTR(LED_MODULE_COLS) ")" },
+      { 0  , "orientation",    true,  "orientation;text view orientation (default=0=normal)" },
+      { 0  , "borderleft",     true,  "columns;number of hidden columns on the left (default=" MKSTR(LED_MODULE_BORDER_LEFT) ")" },
+      { 0  , "borderright",    true,  "columns;number of hidden columns on the right (default=" MKSTR(LED_MODULE_BORDER_RIGHT) ")" },
       { 0  , "jsonapiport",    true,  "port;server port number for JSON API (default=none)" },
       { 0  , "jsonapinonlocal",false, "allow JSON API from non-local clients" },
       { 0  , "button",         true,  "input pinspec; device button" },
@@ -136,7 +147,19 @@ public:
       // create LED chain output
       string ledChainDev;
       if (getStringOption("ledchain", ledChainDev)) {
-        ledChain = LEDChainCommPtr(new LEDChainComm(LEDChainComm::ledtype_ws281x, ledChainDev, LED_MODULE_COLS*LED_MODULE_ROWS, LED_MODULE_COLS, false, true)); // 72 LEDs per row, not reversedX, alternating
+        // get geometry
+        ledRows = LED_MODULE_ROWS;
+        ledCols = LED_MODULE_COLS;
+        ledBorderLeft = LED_MODULE_BORDER_LEFT;
+        ledBorderRight = LED_MODULE_BORDER_RIGHT;
+        ledOrientation = View::right;
+        getIntOption("ledrows", ledRows);
+        getIntOption("ledcols", ledCols);
+        getIntOption("borderleft", ledBorderLeft);
+        getIntOption("borderright", ledBorderRight);
+        getIntOption("orientation", ledOrientation);
+        // create chain driver
+        ledChain = LEDChainCommPtr(new LEDChainComm(LEDChainComm::ledtype_ws281x, ledChainDev, ledRows*ledCols, ledCols, false, true));
         ledChain->begin();
       }
       // - create and start API server and wait for things to happen
@@ -157,7 +180,7 @@ public:
   {
     LOG(LOG_NOTICE, "lethd initialize()");
     if (ledChain) {
-      message = TextViewPtr(new TextView(0, 0, LED_MODULE_COLS, View::right));
+      message = TextViewPtr(new TextView(ledBorderLeft, 0, ledCols-ledBorderLeft-ledBorderRight, (View::Orientation)ledOrientation));
       message->setBackGroundColor(black); // not transparent!
       message->setText("Hello World", true);
       MainLoop::currentMainLoop().executeNow(boost::bind(&LEthD::step, this, _1));
@@ -180,8 +203,8 @@ public:
   void updateDisplay()
   {
     if (message && message->isDirty()) {
-      for (int x=0; x<LED_MODULE_COLS; x++) {
-        for (int y=0; y<LED_MODULE_ROWS; y++) {
+      for (int x=0; x<ledCols; x++) {
+        for (int y=0; y<ledRows; y++) {
           PixelColor p = message->colorAt(x, y);
           PixelColor dp = dimPixel(p, p.a);
           ledChain->setColorXY(x, y, dp.r, dp.g, dp.b);
@@ -343,20 +366,16 @@ public:
           return true;
         }
         else if (aData->get("color", o)) {
-          // webcolor
-          string webcolor = o->stringValue();
-          uint32_t col;
-          if (message && sscanf(webcolor.c_str(),"%x",&col)==1) {
-            PixelColor p;
-            if (webcolor.size()<7)
-              p.a = message->getAlpha();
-            else
-              p.a = (col>>24) & 0xFF;
-            p.r = (col>>16) & 0xFF;
-            p.g = (col>>8) & 0xFF;
-            p.b = col & 0xFF;
-            message->setTextColor(p);
-          }
+          PixelColor p = webColorToPixel(o->stringValue());
+          if (p.a==255) p.a = message->getAlpha();
+          message->setTextColor(p);
+          aRequestDoneCB(JsonObjectPtr(), ErrorPtr());
+          return true;
+        }
+        else if (aData->get("backgroundcolor", o)) {
+          PixelColor p = webColorToPixel(o->stringValue());
+          if (p.a==255) p.a = message->getAlpha();
+          message->setBackGroundColor(p);
           aRequestDoneCB(JsonObjectPtr(), ErrorPtr());
           return true;
         }
