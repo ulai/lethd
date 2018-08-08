@@ -166,7 +166,7 @@ public:
       string apiport;
       if (getStringOption("jsonapiport", apiport)) {
         apiServer = SocketCommPtr(new SocketComm(MainLoop::currentMainLoop()));
-        apiServer->setConnectionParams(NULL, apiport.c_str(), SOCK_STREAM, AF_INET);
+        apiServer->setConnectionParams(NULL, apiport.c_str(), SOCK_STREAM, AF_INET6);
         apiServer->setAllowNonlocalConnections(getOption("jsonapinonlocal"));
         apiServer->startServer(boost::bind(&LEthD::apiConnectionHandler, this, _1), 3);
       }

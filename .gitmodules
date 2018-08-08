@@ -1,4 +1,4 @@
 [submodule "lethd/src/p44utils"]
 	path = src/p44utils
-	url = ../p44utils.git
-	branch = luz
+	url = https://github.com/ulai/p44utils.git
+	branch = master
