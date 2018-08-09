@@ -27,7 +27,7 @@ lethd_CXXFLAGS = \
   -I ${srcdir}/src/p44utils/thirdparty/civetweb \
   -I ${srcdir}/src/p44utils/thirdparty \
   -I ${srcdir}/src \
-  -D DISABLE_I2C=0 \
+  -D DISABLE_I2C=1 \
   -D DISABLE_SPI=0 \
   ${BOOST_CPPFLAGS} \
   ${JSONC_CFLAGS} \

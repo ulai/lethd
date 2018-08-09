@@ -166,7 +166,7 @@ public:
       string apiport;
       if (getStringOption("jsonapiport", apiport)) {
         apiServer = SocketCommPtr(new SocketComm(MainLoop::currentMainLoop()));
-        apiServer->setConnectionParams(NULL, apiport.c_str(), SOCK_STREAM, AF_INET6);
+        apiServer->setConnectionParams(NULL, apiport.c_str(), SOCK_DGRAM, AF_INET6);
         apiServer->setAllowNonlocalConnections(getOption("jsonapinonlocal"));
         apiServer->startServer(boost::bind(&LEthD::apiConnectionHandler, this, _1), 3);
       }
@@ -183,12 +183,11 @@ public:
       message = TextViewPtr(new TextView(ledBorderLeft, 0, ledCols-ledBorderLeft-ledBorderRight, (View::Orientation)ledOrientation));
       message->setBackGroundColor(black); // not transparent!
       message->setText("Hello World", true);
-      MainLoop::currentMainLoop().executeNow(boost::bind(&LEthD::step, this, _1));
+      //MainLoop::currentMainLoop().executeNow(boost::bind(&LEthD::step, this, _1));
     }
 //    // start sampling
 //    sampleTicket.executeOnce(boost::bind(&LEthD::demoSample, this, _1));
   }
-
 
   void step(MLTimer &aTimer)
   {
