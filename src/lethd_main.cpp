@@ -295,7 +295,18 @@ public:
         else {
           // URI params is the JSON to process
           data = aRequest->get("uri_params");
-          if (data) action = true; // GET, but with query_params: treat like PUT/POST with data
+          if (!action && data) {
+            data->resetKeyIteration();
+            string k;
+            JsonObjectPtr v;
+            while (data->nextKeyValue(k, v)) {
+              if (k!="rqvaltok") {
+                // GET, but with query_params other than "rqvaltok": treat like PUT/POST with data
+                action = true;
+                break;
+              }
+            }
+          }
           if (upload) {
             // move that into the request
             data->add("uploadedfile", JsonObject::newString(uploadedfile));
