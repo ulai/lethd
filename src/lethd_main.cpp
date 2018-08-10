@@ -399,7 +399,15 @@ public:
         if (sensor1) answer->add("sensor1", JsonObject::newInt32(sensor1->value()));
         aRequestDoneCB(answer, ErrorPtr());
         return true;
-
+      }
+    }
+    else if (aUri=="log") {
+      if (aIsAction) {
+        if (aData->get("level", o)) {
+          SETLOGLEVEL(o->int32Value());
+          aRequestDoneCB(JsonObjectPtr(), ErrorPtr());
+          return true;
+        }
       }
     }
     return false;
