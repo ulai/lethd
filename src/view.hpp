@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2016-2017 plan44.ch / Lukas Zeller, Zurich, Switzerland
+//  Copyright (c) 2016-2018 plan44.ch / Lukas Zeller, Zurich, Switzerland
 //
 //  Author: Lukas Zeller <luz@plan44.ch>
 //
@@ -38,17 +38,64 @@ namespace p44 {
   const PixelColor black = { .r=0, .g=0, .b=0, .a=255 };
 
   /// Utilities
-  uint8_t dimVal(uint8_t aVal, uint8_t aDim);
-  PixelColor dimPixel(const PixelColor aPix, uint8_t aDim);
+  /// @{
+
+  /// dim down (or light up) value
+  /// @param aVal 0..255 value to dim up or down
+  /// @param aDim 0..255: dim, >255: light up (255=100%)
+  uint8_t dimVal(uint8_t aVal, uint16_t aDim);
+
+  /// dim  r,g,b values of a pixel (alpha unaffected)
+  /// @param aPix the pixel
+  /// @param aDim 0..255: dim, >255: light up (255=100%)
+  void dimPixel(PixelColor &aPix, uint16_t aDim);
+
+  /// return dimmed pixel (alpha same as input)
+  /// @param aPix the pixel
+  /// @param aDim 0..255: dim, >255: light up (255=100%)
+  /// @return dimmed pixel
+  PixelColor dimmedPixel(const PixelColor aPix, uint16_t aDim);
+
+  /// dim pixel r,g,b down by its alpha value, but alpha itself is not changed!
+  /// @param aPix the pixel
+  void alpahDimPixel(PixelColor &aPix);
+
+  /// reduce a value by given amount, but not below minimum
+  /// @param aByte value to be reduced
+  /// @param aAmount amount to reduce
+  /// @param aMin minimum value (default=0)
   void reduce(uint8_t &aByte, uint8_t aAmount, uint8_t aMin = 0);
+
+  /// increase a value by given amount, but not above maximum
+  /// @param aByte value to be increased
+  /// @param aAmount amount to increase
+  /// @param aMax maximum value (default=255)
   void increase(uint8_t &aByte, uint8_t aAmount, uint8_t aMax = 255);
-  void addToPixel(PixelColor &aPixel, PixelColor aIncrease);
+
+  /// add color of one pixel to another
+  /// @note does not check for color component overflow/wraparound!
+  /// @param aPixel the pixel to add to
+  /// @param aPixelToAdd the pixel to add
+  void addToPixel(PixelColor &aPixel, PixelColor aPixelToAdd);
+
+  /// overlay a pixel on top of a pixel (based on alpha values)
+  /// @param aPixel the original pixel to add an ovelay to
+  /// @param aOverlay the pixel to be laid on top
   void overlayPixel(PixelColor &aPixel, PixelColor aOverlay);
+
+  /// mix two pixels
+  /// @param aMainPixel the original pixel which will be modified to contain the mix
+  /// @param aOutsidePixel the pixel to mix in
+  /// @param aAmountOutside 0..255 (= 0..100%) value to determine how much weight the outside pixel should get in the result
+  void mixinPixel(PixelColor &aMainPixel, PixelColor aOutsidePixel, uint8_t aAmountOutside);
 
   /// convert Web color to pixel color
   /// @param aWebColor: web style #ARGB or #AARRGGBB color, alpha (A, AA) is optional, "#" is also optional
   /// @return pixel color. If Alpha is not specified, it is set to fully opaque = 255.
   PixelColor webColorToPixel(const string aWebColor);
+
+  /// @}
+
 
   class View : public P44Obj
   {
@@ -120,12 +167,7 @@ namespace p44 {
 
     virtual ~View();
 
-    /// clear contents of this view
-    /// @note base class just resets content size to zero, subclasses might NOT want to do that
-    ///   and thus choose NOT to call inherited.
-    virtual void clear();
-
-    /// set the frame within the board coordinate system
+    /// set the frame within the parent coordinate system
     /// @param aOriginX origin X on pixelboard
     /// @param aOriginY origin Y on pixelboard
     /// @param aSizeX the X width of the view
@@ -176,6 +218,16 @@ namespace p44 {
     /// set content size to full frame content with same coordinates
     void setFullFrameContent();
 
+    /// get color at X,Y
+    /// @param aX PlayField X coordinate
+    /// @param aY PlayField Y coordinate
+    PixelColor colorAt(int aX, int aY);
+
+    /// clear contents of this view
+    /// @note base class just resets content size to zero, subclasses might NOT want to do that
+    ///   and thus choose NOT to call inherited.
+    virtual void clear();
+
     /// calculate changes on the display, return true if any
     /// @return true if complete, false if step() would like to be called immediately again
     /// @note this is called on the active page at least once per mainloop cycle
@@ -186,11 +238,6 @@ namespace p44 {
 
     /// call when display is updated
     virtual void updated() { dirty = false; };
-
-    /// get color at X,Y
-    /// @param aX PlayField X coordinate
-    /// @param aY PlayField Y coordinate
-    virtual PixelColor colorAt(int aX, int aY);
 
   };
   typedef boost::intrusive_ptr<View> ViewPtr;

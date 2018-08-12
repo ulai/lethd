@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2016-2017 plan44.ch / Lukas Zeller, Zurich, Switzerland
+//  Copyright (c) 2016-2018 plan44.ch / Lukas Zeller, Zurich, Switzerland
 //
 //  Author: Lukas Zeller <luz@plan44.ch>
 //
@@ -57,23 +57,24 @@ namespace p44 {
 
     virtual ~TextView();
 
-    virtual void clear();
-
-    /// calculate changes on the display, return true if any
-    /// @return true if complete, false if step() would like to be called immediately again
-    /// @note this is called on the active page at least once per mainloop cycle
-    virtual bool step();
-
     /// set new text
     void setText(const string aText, bool aScrolling = true);
 
     /// set new text color
     void setTextColor(PixelColor aTextColor);
 
+    /// clear contents of this view
+    virtual void clear() P44_OVERRIDE;
+
+    /// calculate changes on the display, return true if any
+    /// @return true if complete, false if step() would like to be called immediately again
+    /// @note this is called on the active page at least once per mainloop cycle
+    virtual bool step() P44_OVERRIDE;
+
   protected:
 
     /// get content color at X,Y
-    virtual PixelColor contentColorAt(int aX, int aY);
+    virtual PixelColor contentColorAt(int aX, int aY) P44_OVERRIDE;
 
   private:
 

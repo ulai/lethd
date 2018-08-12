@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2016-2017 plan44.ch / Lukas Zeller, Zurich, Switzerland
+//  Copyright (c) 2016-2018 plan44.ch / Lukas Zeller, Zurich, Switzerland
 //
 //  Author: Lukas Zeller <luz@plan44.ch>
 //
@@ -47,12 +47,6 @@ View::~View()
 }
 
 
-void View::clear()
-{
-  setContentSize(0, 0);
-}
-
-
 bool View::isInContentSize(int aX, int aY)
 {
   return aX>=0 && aY>=0 && aX<contentSizeX && aY<contentSizeY;
@@ -66,6 +60,12 @@ void View::setFrame(int aOriginX, int aOriginY, int aSizeX, int aSizeY)
   dX = aSizeX,
   dY = aSizeY;
   makeDirty();
+}
+
+
+void View::clear()
+{
+  setContentSize(0, 0);
 }
 
 
@@ -193,20 +193,33 @@ PixelColor View::colorAt(int aX, int aY)
 
 // MARK: ===== Utilities
 
-uint8_t p44::dimVal(uint8_t aVal, uint8_t aDim)
+uint8_t p44::dimVal(uint8_t aVal, uint16_t aDim)
 {
-  return ((uint16_t)aVal*(aDim+1))>>8;
+  return ((aDim+1)*aVal)>>8;
 }
 
 
-PixelColor p44::dimPixel(const PixelColor aPix, uint8_t aDim)
+void p44::dimPixel(PixelColor &aPix, uint16_t aDim)
 {
-  PixelColor pix;
-  pix.r = dimVal(aPix.r, aDim);
-  pix.g = dimVal(aPix.g, aDim);
-  pix.b = dimVal(aPix.b, aDim);
-  pix.a = aPix.a;
+  aPix.r = dimVal(aPix.r, aDim);
+  aPix.g = dimVal(aPix.g, aDim);
+  aPix.b = dimVal(aPix.b, aDim);
+}
+
+
+PixelColor p44::dimmedPixel(const PixelColor aPix, uint16_t aDim)
+{
+  PixelColor pix = aPix;
+  dimPixel(pix, aDim);
   return pix;
+}
+
+
+void p44::alpahDimPixel(PixelColor &aPix)
+{
+  if (aPix.a!=255) {
+    dimPixel(aPix, aPix.a);
+  }
 }
 
 
@@ -238,9 +251,9 @@ void p44::overlayPixel(PixelColor &aPixel, PixelColor aOverlay)
   else {
     // mix in
     // - reduce original by alpha of overlay
-    aPixel = dimPixel(aPixel, 255-aOverlay.a);
+    aPixel = dimmedPixel(aPixel, 255-aOverlay.a);
     // - reduce overlay by its own alpha
-    aOverlay = dimPixel(aOverlay, aOverlay.a);
+    aOverlay = dimmedPixel(aOverlay, aOverlay.a);
     // - add in
     addToPixel(aPixel, aOverlay);
   }
@@ -248,11 +261,37 @@ void p44::overlayPixel(PixelColor &aPixel, PixelColor aOverlay)
 }
 
 
-void p44::addToPixel(PixelColor &aPixel, PixelColor aIncrease)
+void p44::mixinPixel(PixelColor &aMainPixel, PixelColor aOutsidePixel, uint8_t aAmountOutside)
 {
-  aPixel.r += aIncrease.r;
-  aPixel.g += aIncrease.g;
-  aPixel.b += aIncrease.b;
+  if (aAmountOutside>0) {
+    // mixed transparency
+    if (aMainPixel.a!=255 || aOutsidePixel.a!=255) {
+      uint8_t alpha = dimVal(aMainPixel.a, 255-aAmountOutside) + dimVal(aOutsidePixel.a, aAmountOutside);
+      if (alpha>0) {
+        // calculation only needed for non-transparent result
+        alpahDimPixel(aMainPixel);
+        alpahDimPixel(aOutsidePixel);
+        uint16_t ab = 65025/alpha;
+        dimPixel(aMainPixel, 255-aAmountOutside);
+        addToPixel(aMainPixel, dimmedPixel(aOutsidePixel, aAmountOutside));
+        dimPixel(aMainPixel, ab);
+        aMainPixel.a = alpha;
+      }
+    }
+    else {
+      // no alpha, simplified case
+      dimPixel(aMainPixel, 255-aAmountOutside);
+      addToPixel(aMainPixel, dimmedPixel(aOutsidePixel, aAmountOutside));
+    }
+  }
+}
+
+
+void p44::addToPixel(PixelColor &aPixel, PixelColor aPixelToAdd)
+{
+  aPixel.r += aPixelToAdd.r;
+  aPixel.g += aPixelToAdd.g;
+  aPixel.b += aPixelToAdd.b;
 }
 
 

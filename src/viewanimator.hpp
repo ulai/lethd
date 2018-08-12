@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2016-2017 plan44.ch / Lukas Zeller, Zurich, Switzerland
+//  Copyright (c) 2016-2018 plan44.ch / Lukas Zeller, Zurich, Switzerland
 //
 //  Author: Lukas Zeller <luz@plan44.ch>
 //
@@ -64,9 +64,6 @@ namespace p44 {
 
     virtual ~ViewAnimator();
 
-    /// clear all steps
-    virtual void clear();
-
     /// add animation step view to list of animation steps
     /// @param aView the view to add
     void pushStep(ViewPtr aView, MLMicroSeconds aShowTime, MLMicroSeconds aFadeInTime=0, MLMicroSeconds aFadeOutTime=0);
@@ -80,17 +77,19 @@ namespace p44 {
     /// @note: completed callback will not be called
     void stopAnimation();
 
+    /// clear all steps
+    virtual void clear() P44_OVERRIDE;
 
     /// calculate changes on the display, return true if any
     /// @return true if complete, false if step() would like to be called immediately again
     /// @note this is called on the active page at least once per mainloop cycle
-    virtual bool step();
+    virtual bool step() P44_OVERRIDE;
 
     /// return if anything changed on the display since last call
-    virtual bool isDirty();
+    virtual bool isDirty() P44_OVERRIDE;
 
     /// call when display is updated
-    void updated();
+    virtual void updated() P44_OVERRIDE;
 
   protected:
 
@@ -99,7 +98,7 @@ namespace p44 {
     /// @param aY content Y coordinate
     /// @note aX and aY are NOT guaranteed to be within actual content as defined by contentSizeX/Y
     ///   implementation must check this!
-    virtual PixelColor contentColorAt(int aX, int aY);
+    virtual PixelColor contentColorAt(int aX, int aY) P44_OVERRIDE;
 
   private:
 

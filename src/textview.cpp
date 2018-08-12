@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2016-2017 plan44.ch / Lukas Zeller, Zurich, Switzerland
+//  Copyright (c) 2016-2018 plan44.ch / Lukas Zeller, Zurich, Switzerland
 //
 //  Author: Lukas Zeller <luz@plan44.ch>
 //
@@ -164,7 +164,7 @@ virtual bool step();
 bool isDirty() { return dirty; };
 
 /// call when display is updated
-void updated() { dirty = false; };
+virtual void updated() { dirty = false; };
 
 /// get color at X,Y
 /// @param aX PlayField X coordinate

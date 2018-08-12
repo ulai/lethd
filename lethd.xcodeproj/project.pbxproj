@@ -11,6 +11,7 @@
 		ED19DD1220F797DA0012DE7E /* civetweb.c in Sources */ = {isa = PBXBuildFile; fileRef = ED19DD0E20F797DA0012DE7E /* civetweb.c */; };
 		ED19DD1720F7C3B60012DE7E /* analogio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED19DD1420F7C3B50012DE7E /* analogio.cpp */; };
 		ED19DD1820F7C3B60012DE7E /* pwm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED19DD1620F7C3B60012DE7E /* pwm.cpp */; };
+		ED50D72C211F4914006D75A6 /* viewscroller.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED50D72A211F4914006D75A6 /* viewscroller.cpp */; };
 		ED53729B1DFC2CBE0066FF5A /* application.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED5372671DFC2CBE0066FF5A /* application.cpp */; };
 		ED53729C1DFC2CBE0066FF5A /* colorutils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED5372691DFC2CBE0066FF5A /* colorutils.cpp */; };
 		ED53729D1DFC2CBE0066FF5A /* consolekey.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED53726B1DFC2CBE0066FF5A /* consolekey.cpp */; };
@@ -72,6 +73,10 @@
 		ED19DD1520F7C3B60012DE7E /* pwm.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = pwm.hpp; sourceTree = "<group>"; };
 		ED19DD1620F7C3B60012DE7E /* pwm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pwm.cpp; sourceTree = "<group>"; };
 		ED19DD1A20F8AEA00012DE7E /* configure.ac */ = {isa = PBXFileReference; lastKnownFileType = text; path = configure.ac; sourceTree = "<group>"; };
+		ED50D72A211F4914006D75A6 /* viewscroller.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = viewscroller.cpp; sourceTree = "<group>"; };
+		ED50D72B211F4914006D75A6 /* viewscroller.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = viewscroller.hpp; sourceTree = "<group>"; };
+		ED50D72D211F522B006D75A6 /* imageview.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = imageview.cpp; sourceTree = "<group>"; };
+		ED50D72E211F522B006D75A6 /* imageview.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = imageview.hpp; sourceTree = "<group>"; };
 		ED53725C1DFC28D00066FF5A /* lethd */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = lethd; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED5372671DFC2CBE0066FF5A /* application.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = application.cpp; sourceTree = "<group>"; };
 		ED5372681DFC2CBE0066FF5A /* application.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = application.hpp; sourceTree = "<group>"; };
@@ -196,10 +201,14 @@
 				ED7108EA210E106700A9B57C /* textview.hpp */,
 				ED7108E9210E106600A9B57C /* view.cpp */,
 				ED7108E8210E106600A9B57C /* view.hpp */,
+				ED50D72A211F4914006D75A6 /* viewscroller.cpp */,
+				ED50D72B211F4914006D75A6 /* viewscroller.hpp */,
 				ED7108EB210E106700A9B57C /* viewanimator.cpp */,
 				ED7108EF210E106700A9B57C /* viewanimator.hpp */,
 				ED7108EE210E106700A9B57C /* viewstack.cpp */,
 				ED7108EC210E106700A9B57C /* viewstack.hpp */,
+				ED50D72D211F522B006D75A6 /* imageview.cpp */,
+				ED50D72E211F522B006D75A6 /* imageview.hpp */,
 				ED19DD0720F793030012DE7E /* lethd_main.cpp */,
 			);
 			path = src;
@@ -357,6 +366,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				ED5372A81DFC2CBE0066FF5A /* jsonwebclient.cpp in Sources */,
+				ED50D72C211F4914006D75A6 /* viewscroller.cpp in Sources */,
 				ED5372A11DFC2CBE0066FF5A /* gpio.cpp in Sources */,
 				ED19DD1220F797DA0012DE7E /* civetweb.c in Sources */,
 				ED5372AE1DFC2CBE0066FF5A /* serialcomm.cpp in Sources */,

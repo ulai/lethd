@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2016-2017 plan44.ch / Lukas Zeller, Zurich, Switzerland
+//  Copyright (c) 2016-2018 plan44.ch / Lukas Zeller, Zurich, Switzerland
 //
 //  Author: Lukas Zeller <luz@plan44.ch>
 //
@@ -36,13 +36,6 @@ ViewStack::~ViewStack()
 }
 
 
-void ViewStack::clear()
-{
-  viewStack.clear();
-  inherited::clear();
-}
-
-
 void ViewStack::pushView(ViewPtr aView)
 {
   viewStack.push_back(aView);
@@ -65,6 +58,13 @@ void ViewStack::removeView(ViewPtr aView)
       break;
     }
   }
+}
+
+
+void ViewStack::clear()
+{
+  viewStack.clear();
+  inherited::clear();
 }
 
 
@@ -119,7 +119,7 @@ PixelColor ViewStack::contentColorAt(int aX, int aY)
       // not-fully-transparent pixel
       // - scale down to current budget left
       lc.a = dimVal(lc.a, seethrough);
-      lc = dimPixel(lc, lc.a);
+      lc = dimmedPixel(lc, lc.a);
       addToPixel(pc, lc);
       seethrough -= lc.a;
       if (seethrough<=0) break; // nothing more to see though
@@ -127,7 +127,7 @@ PixelColor ViewStack::contentColorAt(int aX, int aY)
     if (seethrough>0) {
       // rest is background
       lc.a = dimVal(backgroundColor.a, seethrough);
-      lc = dimPixel(backgroundColor, lc.a);
+      lc = dimmedPixel(backgroundColor, lc.a);
       addToPixel(pc, lc);
     }
     // factor in alpha of entire viewstack
