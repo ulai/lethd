@@ -348,6 +348,14 @@ PixelColor p44::webColorToPixel(const string aWebColor)
 }
 
 
+string p44::pixelToWebColor(const PixelColor aPixelColor)
+{
+  string w;
+  if (aPixelColor.a!=255) string_format_append(w, "%02X", aPixelColor.a);
+  string_format_append(w, "%02X%02X%02X", aPixelColor.r, aPixelColor.g, aPixelColor.b);
+  return w;
+}
+
 
 
 

@@ -94,6 +94,12 @@ namespace p44 {
   /// @return pixel color. If Alpha is not specified, it is set to fully opaque = 255.
   PixelColor webColorToPixel(const string aWebColor);
 
+  /// convert pixel color to web color
+  /// @param aPixelColor: pixel color
+  /// @return web color in RRGGBB style or AARRGGBB when alpha is not fully opaque (==255)
+  string pixelToWebColor(const PixelColor aPixelColor);
+
+
   /// @}
 
 
@@ -198,6 +204,9 @@ namespace p44 {
     /// set the view's background color
     /// @param aBackGroundColor color of pixels not covered by content
     void setBackGroundColor(PixelColor aBackGroundColor) { backgroundColor = aBackGroundColor; makeDirty(); };
+
+    /// @return current background color
+    PixelColor getBackGroundColor() { return backgroundColor; }
 
     /// set content wrap mode
     /// @param aWrapMode the new wrap mode

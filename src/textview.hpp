@@ -60,7 +60,7 @@ namespace p44 {
     PixelColor getTextColor() const { return textColor; }
 
     /// set new text color
-    void setTextSpacing(int aTextSpacing) { textSpacing = aTextSpacing; makeDirty(); }
+    void setTextSpacing(int aTextSpacing) { textSpacing = aTextSpacing; renderText(); }
 
     /// get text color
     int getTextSpacing() const { return textSpacing; }

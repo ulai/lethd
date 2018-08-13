@@ -197,7 +197,7 @@ public:
       message->setFrame(0, 0, 1500, 7);
       message->setBackGroundColor(transparent);
       message->setWrapMode(View::wrapX);
-      message->setText("Hello World");
+      message->setText("Hello World +++ ");
       dispView = ViewScrollerPtr(new ViewScroller);
       dispView->setFrame(ledBorderLeft, 0, ledCols-ledBorderLeft-ledBorderRight, ledRows);
       dispView->setBackGroundColor(black); // not transparent!
@@ -419,10 +419,19 @@ public:
           message->setBackGroundColor(p);
           doneSomething = true;
         }
+        if (aData->get("spacing", o)) {
+          message->setTextSpacing(o->int32Value());
+          doneSomething = true;
+        }
       }
       // get
       JsonObjectPtr answer = JsonObject::newObj();
-      if (message) answer->add("text", JsonObject::newString(message->getText()));
+      if (message) {
+        answer->add("text", JsonObject::newString(message->getText()));
+        answer->add("color", JsonObject::newString(pixelToWebColor(message->getTextColor())));
+        answer->add("spacing", JsonObject::newInt32(message->getTextSpacing()));
+        answer->add("backgroundcolor", JsonObject::newString(pixelToWebColor(message->getBackGroundColor())));
+      }
       if (dispView) {
         answer->add("scrolloffsetx", JsonObject::newDouble(dispView->getOffsetX()));
         answer->add("scrolloffsety", JsonObject::newDouble(dispView->getOffsetY()));
