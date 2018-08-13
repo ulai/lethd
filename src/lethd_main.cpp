@@ -26,6 +26,7 @@
 #include "ledchaincomm.hpp"
 
 #include "textview.hpp"
+#include "lethdapi.hpp"
 
 #include <dirent.h>
 
@@ -76,6 +77,8 @@ class LEthD : public CmdLineApp
 
   MLTicket sampleTicket;
 
+  LEthDApiPtr lethdApi;
+
 public:
 
   LEthD() :
@@ -97,6 +100,7 @@ public:
       { 0  , "orientation",    true,  "orientation;text view orientation (default=0=normal)" },
       { 0  , "borderleft",     true,  "columns;number of hidden columns on the left (default=" MKSTR(LED_MODULE_BORDER_LEFT) ")" },
       { 0  , "borderright",    true,  "columns;number of hidden columns on the right (default=" MKSTR(LED_MODULE_BORDER_RIGHT) ")" },
+      { 0  , "lethdapiport",   true,  "port;server port number for lETHd JSON API (default=none)" },
       { 0  , "jsonapiport",    true,  "port;server port number for JSON API (default=none)" },
       { 0  , "jsonapinonlocal",false, "allow JSON API from non-local clients" },
       { 0  , "button",         true,  "input pinspec; device button" },
@@ -169,6 +173,11 @@ public:
         apiServer->setConnectionParams(NULL, apiport.c_str(), SOCK_STREAM, AF_INET6);
         apiServer->setAllowNonlocalConnections(getOption("jsonapinonlocal"));
         apiServer->startServer(boost::bind(&LEthD::apiConnectionHandler, this, _1), 3);
+      }
+      // - create and start API server for lethd server
+      if (getStringOption("lethdapiport", apiport)) {
+        lethdApi = LEthDApiPtr(new LEthDApi());
+        lethdApi->start(apiport.c_str());
       }
     } // if !terminated
     // app now ready to run (or cleanup when already terminated)
