@@ -176,7 +176,7 @@ public:
       }
       // - create and start API server for lethd server
       if (getStringOption("lethdapiport", apiport)) {
-        lethdApi = LEthDApiPtr(new LEthDApi());
+        lethdApi = LEthDApiPtr(new LEthDApi(message));
         lethdApi->start(apiport.c_str());
       }
     } // if !terminated

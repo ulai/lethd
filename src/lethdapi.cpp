@@ -89,8 +89,9 @@ bool LEthDApi::processRequest(JsonObjectPtr aData, RequestDoneCB aRequestDoneCB)
   return true;
 }
 
-LEthDApi::LEthDApi()
+LEthDApi::LEthDApi(TextViewPtr aMessage)
 {
+  message = aMessage;
 }
 
 void LEthDApi::start(const char* aApiPort)

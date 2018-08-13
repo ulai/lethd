@@ -25,6 +25,7 @@
 #include "p44utils_common.hpp"
 
 #include "jsoncomm.hpp"
+#include "textview.hpp"
 
 namespace p44 {
 
@@ -34,9 +35,10 @@ namespace p44 {
   {
     SocketCommPtr apiServer;
     JsonCommPtr connection;
+    TextViewPtr message;
 
   public:
-    LEthDApi();
+    LEthDApi(TextViewPtr aMessage);
     void start(const char* aApiPort);
     void send(int aValue);
 
