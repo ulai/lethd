@@ -38,7 +38,6 @@ typedef struct {
 
 const int numGlyphs = 102; // 96 ASCII 0x20..0x7F plus 6 ÄÖÜäöü
 const int rowsPerGlyph = 7;
-const int glyphSpacing = 2;
 
 static const glyph_t fontGlyphs[numGlyphs] = {
   { 5, "\x00\x00\x00\x00\x00" },  //   0x20 (0)
@@ -51,7 +50,7 @@ static const glyph_t fontGlyphs[numGlyphs] = {
   { 1, "\x01" },                  // ' 0x27 (7)
   { 3, "\x1c\x22\x41" },          // ( 0x28 (8)
   { 3, "\x41\x22\x1c" },          // ) 0x29 (9)
-  { 5, "\x01\x03\x01\x03\x01" },  // * 0x2A (10)
+  { 5, "\x2A\x14\x7F\x14\x2A" },  // * 0x2A (10)
   { 5, "\x08\x08\x3e\x08\x08" },  // + 0x2B (11)
   { 2, "\x50\x30" },              // , 0x2C (12)
   { 5, "\x08\x08\x08\x08\x08" },  // - 0x2D (13)
@@ -144,7 +143,7 @@ static const glyph_t fontGlyphs[numGlyphs] = {
   { 5, "\x7F\x41\x41\x41\x7F" },  //   0x7F (15)
 
   { 5, "\x7D\x0a\x09\x0a\x7D" },  // Ä 0x80 (0)
-  { 5, "\x3F\x41\x41\x41\x3F" },  // Ö 0x81 (1)
+  { 5, "\x3D\x42\x42\x42\x3D" },  // Ö 0x81 (1)
   { 5, "\x3D\x40\x40\x40\x3D" },  // Ü 0x82 (2)
   { 5, "\x20\x55\x54\x55\x78" },  // ä 0x83 (3)
   { 5, "\x38\x45\x44\x45\x38" },  // ö 0x84 (4)
@@ -154,255 +153,100 @@ static const glyph_t fontGlyphs[numGlyphs] = {
 
 // MARK: ===== TextView
 
-/*
-/// calculate changes on the display, return true if any
-/// @return true if complete, false if step() would like to be called immediately again
-/// @note this is called on the active page at least once per mainloop cycle
-virtual bool step();
 
-/// return if anything changed on the display since last call
-bool isDirty() { return dirty; };
-
-/// call when display is updated
-virtual void updated() { dirty = false; };
-
-/// get color at X,Y
-/// @param aX PlayField X coordinate
-/// @param aY PlayField Y coordinate
-virtual PixelColor colorAt(int aX, int aY) = 0;
-*/
-
-TextView::TextView(int aOriginX, int aOriginY, int aWidth, int aOrientation) :
-  textPixels(NULL),
-  lastTextStep(Never)
+TextView::TextView()
 {
-  // content
-  if (aOrientation & xy_swap) {
-    setFrame(aOriginX, aOriginY, rowsPerGlyph, aWidth);
-  }
-  else {
-    setFrame(aOriginX, aOriginY, aWidth, rowsPerGlyph);
-  }
-  setContentSize(aWidth, rowsPerGlyph);
-  setOrientation(aOrientation);
-  textPixels = new uint8_t[contentSizeX*rowsPerGlyph];
+  textSpacing = 2;
   textColor.r = 255;
   textColor.g = 255;
   textColor.b = 255;
   textColor.a = 255;
-  text_intensity = 255; // intensity of last column of text (where text appears)
-  cycles_per_px = 5;
-  text_repeats = 0; // text displays until faded down to almost zero (0=endless)
-  fade_per_repeat = 0; // how much to fade down per repeat (0=no fading)
-  fade_base = 255; // scroll crossfading base brightness level (255=no scroll fading)
-  mirrorText = false;
 }
 
 
 void TextView::clear()
 {
-  setText("", false);
+  setText("");
 }
-
 
 
 TextView::~TextView()
 {
-  if (textPixels) delete[] textPixels;
 }
 
 
-void TextView::crossFade(uint8_t aFader, uint8_t aValue, uint8_t &aOutputA, uint8_t &aOutputB)
+void TextView::setText(const string aText)
 {
-  uint8_t baseBrightness = (aValue*fade_base)>>8;
-  uint8_t varBrightness = aValue-baseBrightness;
-  uint8_t fade = (varBrightness*aFader)>>8;
-  aOutputB = baseBrightness+fade;
-  aOutputA = baseBrightness+(varBrightness-fade);
+  text = aText;
+  renderText();
 }
 
 
-static inline int glyphIndexForChar(const char aChar)
+void TextView::renderText()
 {
-  int i = aChar-0x20;
-  if (i<0 || i>=numGlyphs) i = 95; // ASCII 0x7F-0x20
-  return i;
-}
-
-
-void TextView::setText(const string aText, bool aScrolling)
-{
-  // decode some UTF-8 chars
-  text = "";
-  int i = 0;
-  char c;
-  while (i<(int)aText.length()) {
+  // convert to glyph indices
+  string glyphs;
+  size_t i = 0;
+  while (i<text.size()) {
+    uint8_t textbyte = text[i++];
+    unsigned char c = 0x7F; // placeholder for unknown
     // Ä = C3 84
     // Ö = C3 96
     // Ü = C3 9C
     // ä = C3 A4
     // ö = C3 B6
     // ü = C3 BC
-    if ((uint8_t)aText[i]==0xC3) {
-      if ((int)aText.length()<=i+1) break; // end of text
-      switch ((uint8_t)aText[i+1]) {
+    if (textbyte==0xC3) {
+      if (i>=text.size()) break; // end of text
+      switch ((uint8_t)text[i++]) {
         case 0x84: c = 0x80; break; // Ä
         case 0x96: c = 0x81; break; // Ö
         case 0x9C: c = 0x82; break; // Ü
         case 0xA4: c = 0x83; break; // ä
         case 0xB6: c = 0x84; break; // ö
         case 0xBC: c = 0x85; break; // ü
-        default: c = 0x7F; break; // unknown
-      }
-      i += 1;
-    }
-    else {
-      c = aText[i];
-    }
-    // put to output string
-    text += c;
-    i++;
-  }
-  // initiate display of new text
-  scrolling = aScrolling;
-  textCycleCount = 0;
-  repeatCount = 0;
-  if (scrolling) {
-    // let it scroll in from the right
-    textPixelOffset = -contentSizeX;
-  }
-  else {
-    // just appears at origin
-    textPixelOffset = 0;
-  }
-}
-
-
-void TextView::setTextColor(PixelColor aTextColor)
-{
-  textColor = aTextColor; // alpha of textColor is not used
-  setAlpha(aTextColor.a); // put it into overall layer alpha instead
-}
-
-
-bool TextView::step()
-{
-  MLMicroSeconds now = MainLoop::now();
-  if (lastTextStep+textStepTime<now) {
-    lastTextStep = now;
-    makeDirty(); // things will change
-    // fade between rows
-    uint8_t maxBright = text_intensity-repeatCount*fade_per_repeat;
-    uint8_t thisBright, nextBright;
-    if (scrolling && fade_base<255) {
-      crossFade(255*textCycleCount/cycles_per_px, maxBright, thisBright, nextBright);
-    }
-    else {
-      thisBright = maxBright;
-      nextBright = 0;
-    }
-    // generate vertical rows
-    int activeCols = contentSizeX;
-    // calculate text length in pixels
-    int totalTextPixels = 0;
-    int textLen = (int)text.length();
-    for (int i=0; i<textLen; i++) {
-      // sum up width of individual chars
-      totalTextPixels += fontGlyphs[glyphIndexForChar(text[i])].width + glyphSpacing;
-    }
-    for (int x=0; x<contentSizeX; x++) {
-      uint8_t column = 0;
-      // determine font column
-      if (x<activeCols) {
-        int colPixelOffset = textPixelOffset + x;
-        if (colPixelOffset>=0) {
-          // visible column
-          // - calculate character index
-          int charIndex = 0;
-          int glyphOffset = colPixelOffset;
-          const glyph_t *glyphP = NULL;
-          while (charIndex<textLen) {
-            glyphP = &fontGlyphs[glyphIndexForChar(text[charIndex])];
-            int cw = glyphP->width + glyphSpacing;
-            if (glyphOffset<cw) break; // found char
-            glyphOffset -= cw;
-            charIndex++;
-          }
-          // now we have
-          // - glyphP = the glyph,
-          // - glyphOffset=column offset within that glyph (but might address a spacing column not stored in font table)
-          if (charIndex<textLen) {
-            // is a column of a visible char
-            if (glyphOffset<glyphP->width) {
-              // fetch glyph column
-              column = glyphP->cols[glyphOffset];
-            }
-          }
-        }
-      }
-      // now render columns
-      for (int glyphRow=0; glyphRow<rowsPerGlyph; glyphRow++) {
-        int i;
-        int leftstep;
-        i = glyphRow*contentSizeX + x; // LED index
-        leftstep = -1;
-        if (glyphRow < rowsPerGlyph) {
-          if (column & (0x40>>glyphRow)) {
-            textPixels[i] = thisBright;
-            // also adjust pixel left to this one
-            if (x>0 && fade_base<255) {
-              increase(textPixels[i+leftstep], nextBright, maxBright);
-            }
-            continue;
-          }
-        }
-        textPixels[i] = 0; // no text
-      }
-    }
-    // increment
-    textCycleCount++;
-    if (scrolling) {
-      if (textCycleCount>=cycles_per_px) {
-        textCycleCount = 0;
-        textPixelOffset++;
-        if (textPixelOffset>totalTextPixels) {
-          // text shown, check for repeats
-          repeatCount++;
-          if (text_repeats!=0 && repeatCount>=text_repeats) {
-            // done
-            text = ""; // remove text
-          }
-          else {
-            // show again
-            textPixelOffset = -contentSizeX;
-            textCycleCount = 0;
-          }
-        }
       }
     }
     else {
-      if (textCycleCount>=cycles_per_px*contentSizeX) {
-        repeatCount++;
-        if (text_repeats!=0 && repeatCount>=text_repeats) {
-          // done
-          text = ""; // remove text
-        }
-      }
+      c = textbyte;
+    }
+    // convert to glyph number
+    if (c<0x20 || c>=0x20+numGlyphs) {
+      c = 0x7F; // placeholder for unknown
+    }
+    c -= 0x20;
+    glyphs += c;
+  }
+  // now render glyphs
+  textPixelCols.clear();
+  for (size_t i = 0; i<glyphs.size(); ++i) {
+    const glyph_t &g = fontGlyphs[glyphs[i]];
+    for (int j = 0; j<g.width; ++j) {
+      textPixelCols.append(1, g.cols[j]);
+    }
+    for (int j = 0; j<textSpacing; ++j) {
+      textPixelCols.append(1, 0);
     }
   }
-  return inherited::step(); // completed myself, let inherited process rest
+  // set content size
+  setContentSize((int)textPixelCols.size(), rowsPerGlyph);
+  makeDirty();
 }
 
 
 PixelColor TextView::contentColorAt(int aX, int aY)
 {
-  if (aX<0 || aX>=contentSizeX || aY<0 || aY>=rowsPerGlyph) {
-    return inherited::contentColorAt(aX, aY);
+  if (isInContentSize(aX, aY)) {
+    uint8_t col = textPixelCols[aX];
+    if (col & (1<<(rowsPerGlyph-1-aY))) {
+      return textColor;
+    }
+    else {
+      return inherited::contentColorAt(aX, aY);;
+    }
   }
   else {
-    PixelColor pc = textColor;
-    pc.a = textPixels[aY*contentSizeX + aX]; // brightness of pixel
-    return pc;
+    return inherited::contentColorAt(aX, aY);
   }
 }
 

@@ -33,43 +33,40 @@ namespace p44 {
     typedef View inherited;
 
     // text parameters
-    bool scrolling; // set if text should scroll
-    int text_intensity; // intensity of last column of text (where text appears)
-    int cycles_per_px;
-    int text_repeats; // text displays until faded down to almost zero
-    int fade_per_repeat; // how much to fade down per repeat
-    uint8_t fade_base; // crossfading base brightness level
-    bool mirrorText;
     PixelColor textColor;
-    MLMicroSeconds textStepTime = 0.02*Second;
 
     // text rendering
     string text; ///< internal representation of text
-    uint8_t *textPixels;
-    int textPixelOffset;
-    int textCycleCount;
-    int repeatCount;
-    MLMicroSeconds lastTextStep;
+    int textSpacing; ///< pixels between characters
+    string textPixelCols; ///< string of text column bytes
 
   public :
 
-    TextView(int aOriginX, int aOriginY, int aWidth, int aOrientation=View::right);
+    TextView();
 
     virtual ~TextView();
 
     /// set new text
-    void setText(const string aText, bool aScrolling = true);
+    /// @note: sets the content size of the view according to the text
+    void setText(const string aText);
+
+    /// get current text
+    string getText() const { return text; }
 
     /// set new text color
-    void setTextColor(PixelColor aTextColor);
+    void setTextColor(PixelColor aTextColor) { textColor = aTextColor; makeDirty(); }
+
+    /// get text color
+    PixelColor getTextColor() const { return textColor; }
+
+    /// set new text color
+    void setTextSpacing(int aTextSpacing) { textSpacing = aTextSpacing; makeDirty(); }
+
+    /// get text color
+    int getTextSpacing() const { return textSpacing; }
 
     /// clear contents of this view
     virtual void clear() P44_OVERRIDE;
-
-    /// calculate changes on the display, return true if any
-    /// @return true if complete, false if step() would like to be called immediately again
-    /// @note this is called on the active page at least once per mainloop cycle
-    virtual bool step() P44_OVERRIDE;
 
   protected:
 
@@ -78,7 +75,7 @@ namespace p44 {
 
   private:
 
-    void crossFade(uint8_t aFader, uint8_t aValue, uint8_t &aOutputA, uint8_t &aOutputB);
+    void renderText();
 
   };
   typedef boost::intrusive_ptr<TextView> TextViewPtr;
