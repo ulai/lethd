@@ -29,8 +29,7 @@ using namespace p44;
 
 ViewScroller::ViewScroller() :
   scrollOffsetX(0),
-  scrollOffsetY(0),
-  scrollMode(noWrap)
+  scrollOffsetY(0)
 {
 }
 

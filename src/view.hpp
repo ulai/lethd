@@ -126,6 +126,26 @@ namespace p44 {
     };
     typedef uint8_t Orientation;
 
+    enum {
+      noWrap = 0, /// do not wrap
+      wrapXmin = 0x01, /// wrap in X direction for X<0
+      wrapXmax = 0x02, /// wrap in X direction for X>=content size X
+      wrapX = wrapXmin|wrapXmax, /// wrap in X direction
+      wrapYmin = 0x04, /// wrap in Y direction for Y<0
+      wrapYmax = 0x08, /// wrap in Y direction for Y>=content size Y
+      wrapY = wrapYmin|wrapYmax, /// wrap in Y direction
+      wrapXY = wrapX|wrapY, /// wrap in both directions
+      clipXmin = 0x10, /// clip content left of content area
+      clipXmax = 0x20, /// clip content right of content area
+      clipX = clipXmin|clipXmax, // clip content horizontally
+      clipYmin = 0x10, /// clip content below content area
+      clipYmax = 0x20, /// clip content above content area
+      clipY = clipYmin|clipYmax, // clip content vertically
+      clipXY = clipX|clipY, // clip content
+    };
+    typedef uint8_t WrapMode;
+
+
   protected:
 
     // outer frame
@@ -146,6 +166,7 @@ namespace p44 {
     Orientation contentOrientation; ///< orientation of content in view (defines content->view coordinate transformation)
     int contentSizeX; ///< X size of content (in content coordinates)
     int contentSizeY; ///< Y size of content (in content coordinates)
+    WrapMode contentWrapMode; ///< content wrap mode
 
     /// get content pixel color
     /// @param aX content X coordinate
@@ -177,6 +198,10 @@ namespace p44 {
     /// set the view's background color
     /// @param aBackGroundColor color of pixels not covered by content
     void setBackGroundColor(PixelColor aBackGroundColor) { backgroundColor = aBackGroundColor; makeDirty(); };
+
+    /// set content wrap mode
+    /// @param aWrapMode the new wrap mode
+    void setWrapMode(WrapMode aWrapMode) { contentWrapMode = aWrapMode; makeDirty(); }
 
     /// set view's alpha
     /// @param aAlpha 0=fully transparent, 255=fully opaque

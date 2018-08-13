@@ -30,6 +30,8 @@ View::View()
   setFrame(0, 0, 0, 0);
   // default to normal orientation
   contentOrientation = right;
+  // default to no content wrap
+  contentWrapMode = noWrap;
   // default content size is same as view's
   offsetX = 0;
   offsetY = 0;
@@ -163,28 +165,50 @@ PixelColor View::colorAt(int aX, int aY)
     if (contentOrientation & y_flip) {
       y = contentSizeY-y-1;
     }
-    // NOT limited to content size, content must restrict this!
-    pc = contentColorAt(x, y);
-    #if SHOW_ORIGIN
-    if (x==0 && y==0) {
-      return { .r=255, .g=0, .b=0, .a=255 };
+    // optionally clip content
+    if (contentWrapMode&clipXY && (
+      ((contentWrapMode&clipXmin) && x<0) ||
+      ((contentWrapMode&clipXmax) && x>=contentSizeX) ||
+      ((contentWrapMode&clipYmin) && y<0) ||
+      ((contentWrapMode&clipYmax) && y>=contentSizeY)
+    )) {
+      // clip
+      pc.a = 0; // invisible
     }
-    else if (x==1 && y==0) {
-      return { .r=0, .g=255, .b=0, .a=255 };
-    }
-    else if (x==0 && y==1) {
-      return { .r=0, .g=0, .b=255, .a=255 };
-    }
-    #endif
-    if (pc.a==0) {
-      // background is where content is fully transparent
-      pc = backgroundColor;
-      // Note: view background does NOT shine through semi-transparent content pixels!
-      //   But non-transparent content pixels directly are view pixels!
-    }
-    // factor in layer alpha
-    if (alpha!=255) {
-      pc.a = dimVal(pc.a, alpha);
+    else {
+      // not clipped
+      // optionally wrap content
+      if (contentSizeX>0) {
+        while ((contentWrapMode&wrapXmin) && x<0) x+=contentSizeX;
+        while ((contentWrapMode&wrapXmax) && x>=contentSizeX) x-=contentSizeX;
+      }
+      if (contentSizeY>0) {
+        while ((contentWrapMode&wrapYmin) && y<0) y+=contentSizeY;
+        while ((contentWrapMode&wrapYmax) && y>=contentSizeY) y-=contentSizeY;
+      }
+      // now get content pixel
+      pc = contentColorAt(x, y);
+      #if SHOW_ORIGIN
+      if (x==0 && y==0) {
+        return { .r=255, .g=0, .b=0, .a=255 };
+      }
+      else if (x==1 && y==0) {
+        return { .r=0, .g=255, .b=0, .a=255 };
+      }
+      else if (x==0 && y==1) {
+        return { .r=0, .g=0, .b=255, .a=255 };
+      }
+      #endif
+      if (pc.a==0) {
+        // background is where content is fully transparent
+        pc = backgroundColor;
+        // Note: view background does NOT shine through semi-transparent content pixels!
+        //   But non-transparent content pixels directly are view pixels!
+      }
+      // factor in layer alpha
+      if (alpha!=255) {
+        pc.a = dimVal(pc.a, alpha);
+      }
     }
   }
   return pc;

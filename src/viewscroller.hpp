@@ -31,22 +31,12 @@ namespace p44 {
   {
     typedef View inherited;
 
-  public:
-
-    enum {
-      noWrap = 0, /// do not wrap
-      wrapX = 0x01, /// wrap in X direction
-      wrapY = 0x02, /// wrap in Y direction
-    };
-    typedef uint8_t ScrollMode;
-
   private:
 
     ViewPtr scrolledView;
 
     double scrollOffsetX; ///< X distance from this view's content origin to the scrolled view's origin
     double scrollOffsetY; ///< Y distance from this view's content origin to the scrolled view's origin
-    ScrollMode scrollMode; ///< wrap modes
 
   protected:
 
@@ -70,20 +60,21 @@ namespace p44 {
 
     /// set scroll offsets
     /// @param aOffsetX X direction scroll offset, subpixel distances allowed
-    /// @param aOffsetY Y direction scroll offset, subpixel distances allowed
-    /// @note the scroll offsets describe the distance from this view's content origin (not its origin on the parent view!)
+    /// @note the scroll offset describes the distance from this view's content origin (not its origin on the parent view!)
     ///   to the scrolled view's origin (not its content origin)
-    void setOffsets(double aOffsetX, double aOffsetY) { scrollOffsetX = aOffsetX; scrollOffsetY = aOffsetY; makeDirty(); }
+    void setOffsetX(double aOffsetX) { scrollOffsetX = aOffsetX; makeDirty(); }
+
+    /// set scroll offsets
+    /// @param aOffsetY Y direction scroll offset, subpixel distances allowed
+    /// @note the scroll offset describes the distance from this view's content origin (not its origin on the parent view!)
+    ///   to the scrolled view's origin (not its content origin)
+    void setOffsetY(double aOffsetY) { scrollOffsetY = aOffsetY; makeDirty(); }
 
     /// @return the current X scroll offset
     double offsetX() { return scrollOffsetX; };
 
     /// @return the current Y scroll offset
     double offsetY() { return scrollOffsetY; };
-
-    /// set scroll mode
-    /// @param aScrollMode set the scroll mode (wraparound options)
-    void setScrollMode(ScrollMode aScrollMode) { scrollMode = aScrollMode; makeDirty(); }
 
     /// clear contents of this view
     virtual void clear() P44_OVERRIDE;
