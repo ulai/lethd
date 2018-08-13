@@ -27,6 +27,8 @@
 
 #include "textview.hpp"
 #include "lethdapi.hpp"
+#include "fader.hpp"
+#include "neuron.hpp"
 
 #include <dirent.h>
 
@@ -77,7 +79,9 @@ class LEthD : public CmdLineApp
 
   MLTicket sampleTicket;
 
-  LEthDApiPtr lethdApi;
+  LethdApiPtr lethdApi;
+  FaderPtr fader;
+  NeuronPtr neuron;
 
 public:
 
@@ -174,9 +178,10 @@ public:
         apiServer->setAllowNonlocalConnections(getOption("jsonapinonlocal"));
         apiServer->startServer(boost::bind(&LEthD::apiConnectionHandler, this, _1), 3);
       }
+
       // - create and start API server for lethd server
       if (getStringOption("lethdapiport", apiport)) {
-        lethdApi = LEthDApiPtr(new LEthDApi(message));
+        lethdApi = LethdApiPtr(new LethdApi(message, fader, boost::bind(&LEthD::initFeature, this, _1)));
         lethdApi->start(apiport.c_str());
       }
     } // if !terminated
@@ -194,10 +199,41 @@ public:
       message->setText("Hello World", true);
       MainLoop::currentMainLoop().executeNow(boost::bind(&LEthD::step, this, _1));
     }
-//    // start sampling
-//    sampleTicket.executeOnce(boost::bind(&LEthD::demoSample, this, _1));
+
+    MainLoop::currentMainLoop().executeNow(boost::bind(&LEthD::features, this, _1));
   }
 
+  void initFeature(JsonObjectPtr aData) {
+    ErrorPtr err;
+    JsonObjectPtr o;
+    LOG(LOG_INFO, "initFeature: %s", aData->c_strValue());
+
+    if(aData->get("text", o)) {
+      // TODO init text, ledchain etc.
+    } else if(aData->get("light", o)) {
+      LOG(LOG_INFO, "initialize fader");
+      if(!fader) fader = new Fader(boost::bind(&LEthD::fadeUpdate, this, _1));
+    } else if(aData->get("neuron", o)) {
+      LOG(LOG_INFO, "initialize neuron");
+      if(!neuron) neuron = new Neuron(ledChain, lethdApi, boost::bind(&LEthD::neuronMeasure, this));
+    }
+  }
+
+  void features(MLTimer &aTimer) {
+    if(fader) fader->update();
+    if(neuron) neuron->update();
+    MainLoop::currentMainLoop().retriggerTimer(aTimer, 10*MilliSecond);
+  }
+
+  void fadeUpdate(double aValue) {
+    if (pwmDimmer) pwmDimmer->setValue(aValue);
+  }
+
+  double neuronMeasure() {
+    double value = -1;
+    if (sensor0) sensor0->value();
+    return value;
+  }
 
   void step(MLTimer &aTimer)
   {
@@ -207,7 +243,6 @@ public:
     }
     MainLoop::currentMainLoop().retriggerTimer(aTimer, 10*MilliSecond);
   }
-
 
   void updateDisplay()
   {
@@ -223,8 +258,6 @@ public:
       message->updated();
     }
   }
-
-
 
   void demoSample(MLTimer &aTimer)
   {

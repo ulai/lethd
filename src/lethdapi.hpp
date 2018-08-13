@@ -1,9 +1,9 @@
 //
 //  Copyright (c) 2016-2017 plan44.ch / Lukas Zeller, Zurich, Switzerland
 //
-//  Author: Lukas Zeller <luz@plan44.ch>
+//  Author: Ueli Wahlen <ueli@hotmail.com>
 //
-//  This file is part of pixelboardd.
+//  This file is part of lethd.
 //
 //  pixelboardd is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -26,19 +26,23 @@
 
 #include "jsoncomm.hpp"
 #include "textview.hpp"
+#include "fader.hpp"
 
 namespace p44 {
 
   typedef boost::function<void (JsonObjectPtr aResponse, ErrorPtr aError)> RequestDoneCB;
+  typedef boost::function<void (JsonObjectPtr aData)> InitFeatureCB;
 
-  class LEthDApi : public P44Obj
+  class LethdApi : public P44Obj
   {
     SocketCommPtr apiServer;
     JsonCommPtr connection;
     TextViewPtr message;
+    FaderPtr fader;
+    InitFeatureCB initFeature;
 
   public:
-    LEthDApi(TextViewPtr aMessage);
+    LethdApi(TextViewPtr aMessage, FaderPtr aFader, InitFeatureCB aInitFeature);
     void start(const char* aApiPort);
     void send(int aValue);
 
@@ -46,12 +50,24 @@ namespace p44 {
     SocketCommPtr apiConnectionHandler(SocketCommPtr aServerSocketComm);
     void apiRequestHandler(JsonCommPtr aConnection, ErrorPtr aError, JsonObjectPtr aRequest);
     void requestHandled(JsonCommPtr aConnection, JsonObjectPtr aResponse, ErrorPtr aError);
-    int init(JsonObjectPtr aData);
-    void echo(JsonObjectPtr aData);
-    bool processRequest(JsonObjectPtr aData, RequestDoneCB aRequestDoneCB);
+    void init(JsonObjectPtr aData);
+    void now(JsonObjectPtr aData);
+    void fade(JsonObjectPtr aData);
+    ErrorPtr processRequest(JsonObjectPtr aData);
   };
 
-  typedef boost::intrusive_ptr<LEthDApi> LEthDApiPtr;
+  typedef boost::intrusive_ptr<LethdApi> LethdApiPtr;
+
+  class LethdApiError : public Error
+  {
+  public:
+    static const char *domain() { return "LehtdApiError"; }
+    virtual const char *getErrorDomain() const { return LethdApiError::domain(); };
+    LethdApiError() : Error(Error::NotOK) {};
+
+    /// factory method to create string error fprint style
+    static ErrorPtr err(const char *aFmt, ...) __printflike(1,2);
+  };
 
 } // namespace p44
 

@@ -14,7 +14,7 @@ endif
 if P44_BUILD_OW
 lethd_PLATFORM = -D P44_BUILD_OW=1
 else
-lethd_PLATFORM = -D DISABLE_I2C=0
+lethd_PLATFORM = -D DISABLE_I2C=1
 endif
 
 
@@ -126,4 +126,8 @@ lethd_SOURCES = \
   src/viewanimator.hpp \
   src/lethdapi.cpp \
   src/lethdapi.hpp \
+  src/fader.cpp \
+  src/fader.hpp \
+  src/neuron.cpp \
+  src/neuron.hpp \
   src/lethd_main.cpp

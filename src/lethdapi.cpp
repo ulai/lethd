@@ -1,9 +1,9 @@
 //
 //  Copyright (c) 2016-2017 plan44.ch / Lukas Zeller, Zurich, Switzerland
 //
-//  Author: Lukas Zeller <luz@plan44.ch>
+//  Author: Ueli Wahlen <ueli@hotmail.com>
 //
-//  This file is part of pixelboardd.
+//  This file is part of lethd.
 //
 //  pixelboardd is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -23,31 +23,27 @@
 
 using namespace p44;
 
-SocketCommPtr LEthDApi::apiConnectionHandler(SocketCommPtr aServerSocketComm)
+SocketCommPtr LethdApi::apiConnectionHandler(SocketCommPtr aServerSocketComm)
 {
   JsonCommPtr conn = JsonCommPtr(new JsonComm(MainLoop::currentMainLoop()));
-  conn->setMessageHandler(boost::bind(&LEthDApi::apiRequestHandler, this, conn, _1, _2));
+  conn->setMessageHandler(boost::bind(&LethdApi::apiRequestHandler, this, conn, _1, _2));
   conn->setClearHandlersAtClose(); // close must break retain cycles so this object won't cause a mem leak
-  LOG(LOG_INFO,"apiConnectionHandler");
+
   connection = conn;
   return conn;
 }
 
-
-void LEthDApi::apiRequestHandler(JsonCommPtr aConnection, ErrorPtr aError, JsonObjectPtr aRequest)
+void LethdApi::apiRequestHandler(JsonCommPtr aConnection, ErrorPtr aError, JsonObjectPtr aRequest)
 {
   if (Error::isOK(aError)) {
     LOG(LOG_INFO,"API request: %s", aRequest->c_strValue());
-    if (processRequest(aRequest, boost::bind(&LEthDApi::requestHandled, this, aConnection, _1, _2))) {
-      // done, callback will send response and close connection
-      return;
-    }
+    aError = processRequest(aRequest);
   }
   // return
   requestHandled(aConnection, JsonObjectPtr(), aError);
 }
 
-void LEthDApi::requestHandled(JsonCommPtr aConnection, JsonObjectPtr aResponse, ErrorPtr aError)
+void LethdApi::requestHandled(JsonCommPtr aConnection, JsonObjectPtr aResponse, ErrorPtr aError)
 {
   if (!aResponse) {
     aResponse = JsonObject::newObj(); // empty response
@@ -59,54 +55,78 @@ void LEthDApi::requestHandled(JsonCommPtr aConnection, JsonObjectPtr aResponse, 
   aConnection->sendMessage(aResponse);
 }
 
-int LEthDApi::init(JsonObjectPtr aData)
+void LethdApi::init(JsonObjectPtr aData)
 {
-  LOG(LOG_INFO,"init");
+  initFeature(aData);
 }
 
-void LEthDApi::echo(JsonObjectPtr aData)
+void LethdApi::now(JsonObjectPtr aData)
 {
   JsonObjectPtr answer = JsonObject::newObj();
-  answer->add("answer", JsonObject::newString("ok"));
+  answer->add("now", JsonObject::newInt64(MainLoop::now()));
   connection->sendMessage(answer);
 }
 
-bool LEthDApi::processRequest(JsonObjectPtr aData, RequestDoneCB aRequestDoneCB)
+void LethdApi::fade(JsonObjectPtr aData)
+{
+  double from = fader->current();
+  if(aData->get("from")) from = aData->get("from")->doubleValue();
+  double to = aData->get("to")->doubleValue();
+  int64_t t = aData->get("t")->int64Value();
+  MLMicroSeconds start = aData->get("t")->int64Value();
+  fader->fade(from, to, t, start);
+}
+
+ErrorPtr LethdApi::processRequest(JsonObjectPtr aData)
 {
   ErrorPtr err;
-  JsonObjectPtr o;
 
-  string aCmd = aData->get("cmd")->stringValue();
+  if(!aData->get("cmd")) return LethdApiError::err("Misssing cmd attribute");
+  if(!aData->get("cmd")->isType(json_type_string)) return LethdApiError::err("cmd attribute must be a string");
+  string aCmd = aData->get("cmd")->stringValue().c_str();
 
-  typedef boost::function<void (JsonObjectPtr aData)> FunctionCB;
+  typedef boost::function<void (JsonObjectPtr aData)> CmdFunctionCB;
+  static std::map<string, CmdFunctionCB> m;
 
-  static std::map<string, FunctionCB> m;
-  m["init"] = boost::bind(&LEthDApi::init, this, _1);
-  m["echo"] = boost::bind(&LEthDApi::echo, this, _1);
+  m["init"] = boost::bind(&LethdApi::init, this, _1);
+  m["now"] = boost::bind(&LethdApi::now, this, _1);
+  m["fade"] = boost::bind(&LethdApi::fade, this, _1);
 
-  if(m.count(aCmd.c_str())) m[aCmd.c_str()](aData);
+  if(m.count(aCmd)) m[aCmd](aData);
 
-  return true;
+  return LethdApiError::err("Unknown cmd: %s", aCmd.c_str());
 }
 
-LEthDApi::LEthDApi(TextViewPtr aMessage)
+LethdApi::LethdApi(TextViewPtr aMessage, FaderPtr aFader, InitFeatureCB aInitFeature)
 {
   message = aMessage;
+  fader = aFader;
+  initFeature = aInitFeature;
 }
 
-void LEthDApi::start(const char* aApiPort)
+void LethdApi::start(const char* aApiPort)
 {
   apiServer = SocketCommPtr(new SocketComm(MainLoop::currentMainLoop()));
   apiServer->setConnectionParams(NULL, aApiPort, SOCK_STREAM, AF_INET6);
   apiServer->setAllowNonlocalConnections(true);
-  apiServer->startServer(boost::bind(&LEthDApi::apiConnectionHandler, this, _1), 3);
+  apiServer->startServer(boost::bind(&LethdApi::apiConnectionHandler, this, _1), 3);
   LOG(LOG_INFO, "LEthDApi listening on %s", aApiPort);
 }
 
-void LEthDApi::send(int aValue)
+void LethdApi::send(int aValue)
 {
   if(!connection) return;
   JsonObjectPtr aMessage = JsonObject::newObj();
   aMessage->add("sensor", JsonObject::newInt32(aValue));
   connection->sendMessage(aMessage);
+}
+
+ErrorPtr LethdApiError::err(const char *aFmt, ...)
+{
+  Error *errP = new LethdApiError();
+  va_list args;
+  va_start(args, aFmt);
+  errP->setFormattedMessage(aFmt, args);
+  va_end(args);
+  return ErrorPtr(errP);
 }
