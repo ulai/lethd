@@ -26,6 +26,7 @@
 #include "ledchaincomm.hpp"
 
 #include "textview.hpp"
+#include "viewscroller.hpp"
 
 #include <dirent.h>
 
@@ -70,11 +71,17 @@ class LEthD : public CmdLineApp
   int ledBorderLeft;
   int ledOrientation;
 
+  ViewScrollerPtr dispView;
   TextViewPtr message;
 
   MLMicroSeconds starttime;
 
   MLTicket sampleTicket;
+
+  int numScrollSteps;
+  double scrollStepX;
+  double scrollStepY;
+  MLMicroSeconds scrollStepInterval;
 
 public:
 
@@ -180,67 +187,56 @@ public:
   {
     LOG(LOG_NOTICE, "lethd initialize()");
     if (ledChain) {
-      message = TextViewPtr(new TextView(ledBorderLeft, 0, ledCols-ledBorderLeft-ledBorderRight, (View::Orientation)ledOrientation));
-      message->setBackGroundColor(black); // not transparent!
-      message->setText("Hello World", true);
+      // init scroll params
+      numScrollSteps = -1; // endless
+      scrollStepX = 0.1;
+      scrollStepY = 0;
+      scrollStepInterval = 20*MilliSecond;
+      // create views
+      message = TextViewPtr(new TextView);
+      message->setFrame(0, 0, 1500, 7);
+      message->setBackGroundColor(transparent);
+      message->setWrapMode(View::wrapX);
+      message->setText("Hello World");
+      dispView = ViewScrollerPtr(new ViewScroller);
+      dispView->setFrame(ledBorderLeft, 0, ledCols-ledBorderLeft-ledBorderRight, ledRows);
+      dispView->setBackGroundColor(black); // not transparent!
+      dispView->setScrolledView(message);
+      // set up auto-scroll
+      dispView->startScroll(scrollStepX, scrollStepY, scrollStepInterval, numScrollSteps);
+      // start stepping
       MainLoop::currentMainLoop().executeNow(boost::bind(&LEthD::step, this, _1));
     }
-//    // start sampling
-//    sampleTicket.executeOnce(boost::bind(&LEthD::demoSample, this, _1));
   }
 
 
   void step(MLTimer &aTimer)
   {
-    if (message) {
-      message->step();
+    if (dispView) {
+      bool complete;
+      do {
+        complete = dispView->step();
+      } while (!complete);
       updateDisplay();
     }
-    MainLoop::currentMainLoop().retriggerTimer(aTimer, 10*MilliSecond);
+    MainLoop::currentMainLoop().retriggerTimer(aTimer, 2*MilliSecond);
   }
 
 
   void updateDisplay()
   {
-    if (message && message->isDirty()) {
+    if (dispView && dispView->isDirty()) {
       for (int x=0; x<ledCols; x++) {
         for (int y=0; y<ledRows; y++) {
-          PixelColor p = message->colorAt(x, y);
-          PixelColor dp = dimPixel(p, p.a);
+          PixelColor p = dispView->colorAt(x, y);
+          PixelColor dp = dimmedPixel(p, p.a);
           ledChain->setColorXY(x, y, dp.r, dp.g, dp.b);
         }
       }
       ledChain->show();
-      message->updated();
+      dispView->updated();
     }
   }
-
-
-
-  void demoSample(MLTimer &aTimer)
-  {
-    double ad = sensor0->value();
-    LOG(LOG_INFO, "A/D sample value = %.0f", ad);
-    // adjust PWM
-    if (pwmDimmer) pwmDimmer->setValue(ad/1024*100);
-//    // show LED bar
-//    if (ledChain) {
-//      const int numLeds = 10;
-//      int onLeds = ad/1024*numLeds;
-//      LOG(LOG_INFO, "onLeds=%d", onLeds);
-//      for (int i=0; i<numLeds; i++) {
-//        if (i<=onLeds) {
-//          ledChain->setColor(i, 255, 255-(255*i/numLeds), 0);
-//        }
-//        else {
-//          ledChain->setColor(i, 0, 50, 0);
-//        }
-//      }
-//      ledChain->show();
-//    }
-    MainLoop::currentMainLoop().retriggerTimer(aTimer, 333*MilliSecond);
-  }
-
 
 
   // MARK: ==== Button
@@ -350,7 +346,6 @@ public:
     ErrorPtr err;
     JsonObjectPtr o;
     if (aUri=="brightness") {
-      JsonObjectPtr answer;
       if (aIsAction) {
         // set
         if (message && aData->get("text", o)) {
@@ -363,7 +358,7 @@ public:
         }
       }
       // get
-      answer = JsonObject::newObj();
+      JsonObjectPtr answer = JsonObject::newObj();
       if (message) answer->add("text", JsonObject::newInt32((double)(message->getAlpha())/255.0*100));
       if (pwmDimmer) answer->add("light", JsonObject::newDouble(pwmDimmer->value()));
       aRequestDoneCB(answer, ErrorPtr());
@@ -371,26 +366,72 @@ public:
     }
     else if (aUri=="text") {
       if (aIsAction) {
+        bool doneSomething = false;
         if (aData->get("message", o)) {
-          if (message) message->setText(o->stringValue(), true);
-          aRequestDoneCB(JsonObjectPtr(), ErrorPtr());
-          return true;
+          if (message) message->setText(o->stringValue());
+          doneSomething = true;
         }
-        else if (aData->get("color", o)) {
+        if (aData->get("scrolloffsetx", o)) {
+          if (dispView) dispView->setOffsetX(o->doubleValue());
+          doneSomething = true;
+        }
+        if (aData->get("scrolloffsety", o)) {
+          if (dispView) dispView->setOffsetY(o->doubleValue());
+          doneSomething = true;
+        }
+        if (aData->get("scrollstepx", o)) {
+          scrollStepX = o->doubleValue();
+          if (dispView) dispView->startScroll(scrollStepX, scrollStepY, scrollStepInterval, numScrollSteps);
+          doneSomething = true;
+        }
+        if (aData->get("scrollstepy", o)) {
+          scrollStepY = o->doubleValue();
+          if (dispView) dispView->startScroll(scrollStepX, scrollStepY, scrollStepInterval, numScrollSteps);
+          doneSomething = true;
+        }
+        if (aData->get("scrollsteptime", o)) {
+          scrollStepInterval = o->doubleValue()*MilliSecond;
+          if (dispView) dispView->startScroll(scrollStepX, scrollStepY, scrollStepInterval, numScrollSteps);
+          doneSomething = true;
+        }
+        if (aData->get("scrollsteps", o)) {
+          int s = o->int32Value();
+          if (dispView) {
+            if (s==0) {
+              dispView->stopScroll();
+            }
+            else {
+              numScrollSteps = s;
+              dispView->startScroll(scrollStepX, scrollStepY, scrollStepInterval, numScrollSteps);
+            }
+          }
+          doneSomething = true;
+        }
+        if (aData->get("color", o)) {
           PixelColor p = webColorToPixel(o->stringValue());
           if (p.a==255) p.a = message->getAlpha();
           message->setTextColor(p);
-          aRequestDoneCB(JsonObjectPtr(), ErrorPtr());
-          return true;
+          doneSomething = true;
         }
-        else if (aData->get("backgroundcolor", o)) {
+        if (aData->get("backgroundcolor", o)) {
           PixelColor p = webColorToPixel(o->stringValue());
           if (p.a==255) p.a = message->getAlpha();
           message->setBackGroundColor(p);
-          aRequestDoneCB(JsonObjectPtr(), ErrorPtr());
-          return true;
+          doneSomething = true;
         }
       }
+      // get
+      JsonObjectPtr answer = JsonObject::newObj();
+      if (message) answer->add("text", JsonObject::newString(message->getText()));
+      if (dispView) {
+        answer->add("scrolloffsetx", JsonObject::newDouble(dispView->getOffsetX()));
+        answer->add("scrolloffsety", JsonObject::newDouble(dispView->getOffsetY()));
+        answer->add("scrollstepx", JsonObject::newDouble(dispView->getStepX()));
+        answer->add("scrollstepy", JsonObject::newDouble(dispView->getStepY()));
+        answer->add("scrollsteptime", JsonObject::newDouble(dispView->getScrollStepInterval()/MilliSecond));
+      }
+      aRequestDoneCB(answer, ErrorPtr());
+      return true;
     }
     else if (aUri=="inputs") {
       if (!aIsAction) {
