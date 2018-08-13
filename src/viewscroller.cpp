@@ -28,8 +28,13 @@ using namespace p44;
 
 
 ViewScroller::ViewScroller() :
-  scrollOffsetX(0),
-  scrollOffsetY(0)
+  scrollOffsetX_milli(0),
+  scrollOffsetY_milli(0),
+  scrollStepX_milli(0),
+  scrollStepY_milli(0),
+  scrollSteps(0),
+  scrollStepInterval(Never),
+  nextScrollStepAt(Never)
 {
 }
 
@@ -47,11 +52,75 @@ void ViewScroller::clear()
 }
 
 
+#define BUSYWAIT_TIME_TO_STEP (1*MilliSecond)
+
 bool ViewScroller::step()
 {
   bool complete = inherited::step();
   if (scrolledView && !scrolledView->step()) {
     complete = false;
+  }
+  // scroll
+  if (scrollSteps!=0 && scrollStepInterval>0) {
+    // scrolling
+    MLMicroSeconds now = MainLoop::now();
+    MLMicroSeconds next = nextScrollStepAt-now; // time to next step
+    if (next>0) {
+      if (next<BUSYWAIT_TIME_TO_STEP) {
+        // we want to be called quickly again when next step is near
+        complete = false;
+      }
+    }
+    else {
+      // execute all step(s) pending
+      // Note: will catch up in case step() was not called often enough
+      while (next<=0) {
+        if (next<-10*MilliSecond) {
+          LOG(LOG_DEBUG, "ViewScroller: Warning: precision below 10mS: %lld uS after precise time", next);
+        }
+        // perform step
+        scrollOffsetX_milli += scrollStepX_milli;
+        scrollOffsetY_milli += scrollStepY_milli;
+        makeDirty();
+        // limit coordinate increase in wraparound scroll view
+        if (scrolledView) {
+          WrapMode wm = scrolledView->getWrapMode();
+          if (wm&wrapX) {
+            long csx_milli = scrolledView->getContentSizeX()*1000;
+            if ((wm&wrapXmax) && scrollOffsetX_milli>=csx_milli)
+              scrollOffsetX_milli-=csx_milli;
+            if ((wm&wrapXmin) && scrollOffsetX_milli<0)
+              scrollOffsetX_milli+=csx_milli;
+          }
+          if (wm&wrapY) {
+            long csy_milli = scrolledView->getContentSizeY()*1000;
+            if ((wm&wrapYmax) && scrollOffsetY_milli>=csy_milli)
+              scrollOffsetY_milli-=csy_milli;
+            if ((wm&wrapYmin) && scrollOffsetY_milli<0)
+              scrollOffsetY_milli+=csy_milli;
+          }
+        }
+        // check scroll end
+        if (scrollSteps>0) {
+          scrollSteps--;
+          if (scrollSteps==0) {
+            // scroll ends here
+            if (scrollCompletedCB) {
+              SimpleCB cb = scrollCompletedCB;
+              scrollCompletedCB = NULL;
+              cb(); // may set up another callback already
+            }
+            break;
+          }
+        }
+        // advance to next step
+        next += scrollStepInterval;
+        nextScrollStepAt += scrollStepInterval;
+        if (next<0) {
+          LOG(LOG_INFO, "ViewScroller: needs to catch-up steps -> call step() more often!");
+        }
+      }
+    }
   }
   return complete;
 }
@@ -76,13 +145,13 @@ PixelColor ViewScroller::contentColorAt(int aX, int aY)
 {
   if (!scrolledView) return transparent;
   // Note: implementation aims to be efficient at integer scroll offsets in either or both directions
-  int sampleOffsetX = (int)lround(scrollOffsetX);
-  int sampleOffsetY = (int)lround(scrollOffsetY);
+  int sampleOffsetX = (int)((scrollOffsetX_milli+(scrollOffsetX_milli>0 ? 500 : -500))/1000);
+  int sampleOffsetY = (int)((scrollOffsetY_milli+(scrollOffsetY_milli>0 ? 500 : -500))/1000);
   int subSampleOffsetX = 1;
   int subSampleOffsetY = 1;
-  int outsideWeightX = (scrollOffsetX-sampleOffsetX)*255;
+  int outsideWeightX = (int)((scrollOffsetX_milli-(long)sampleOffsetX*1000)*255/1000);
   if (outsideWeightX<0) { outsideWeightX *= -1; subSampleOffsetX = -1; }
-  int outsideWeightY = (scrollOffsetY-sampleOffsetY)*255;
+  int outsideWeightY = (int)((scrollOffsetY_milli-(long)sampleOffsetY*1000)*255/1000);
   if (outsideWeightY<0) { outsideWeightY *= -1; subSampleOffsetY = -1; }
   sampleOffsetX += aX;
   sampleOffsetY += aY;
@@ -105,3 +174,22 @@ PixelColor ViewScroller::contentColorAt(int aX, int aY)
   }
   return samp;
 }
+
+
+void ViewScroller::startScroll(double aStepX, double aStepY, MLMicroSeconds aInterval, long aNumSteps, MLMicroSeconds aStartTime, SimpleCB aCompletedCB)
+{
+  scrollStepX_milli = aStepX*1000;
+  scrollStepY_milli = aStepY*1000;
+  scrollStepInterval = aInterval;
+  scrollSteps = aNumSteps;
+  nextScrollStepAt = aStartTime==Never ? MainLoop::now() : aStartTime;
+  scrollCompletedCB = aCompletedCB;
+}
+
+
+void ViewScroller::stopScroll()
+{
+  // no more steps
+  scrollSteps = 0;
+}
+

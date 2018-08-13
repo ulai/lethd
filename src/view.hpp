@@ -203,6 +203,10 @@ namespace p44 {
     /// @param aWrapMode the new wrap mode
     void setWrapMode(WrapMode aWrapMode) { contentWrapMode = aWrapMode; makeDirty(); }
 
+    /// get current wrap mode
+    /// @return current wrap mode
+    WrapMode getWrapMode() { return contentWrapMode; }
+
     /// set view's alpha
     /// @param aAlpha 0=fully transparent, 255=fully opaque
     void setAlpha(int aAlpha);
@@ -239,6 +243,13 @@ namespace p44 {
 
     /// set content size
     void setContentSize(int aSizeX, int aSizeY) { contentSizeX = aSizeX; contentSizeY = aSizeY; makeDirty(); };
+
+    /// @return content size X
+    int getContentSizeX() const { return contentSizeX; }
+
+    /// @return content size Y
+    int getContentSizeY() const { return contentSizeY; }
+
 
     /// set content size to full frame content with same coordinates
     void setFullFrameContent();
