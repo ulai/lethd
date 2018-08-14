@@ -37,8 +37,6 @@ void Fader::fade(double aFrom, double aTo, MLMicroSeconds aFadeTime, MLMicroSeco
   ticket.executeOnceAt(boost::bind(&Fader::update, this, _1), aStartTime);
 }
 
-
-
 void Fader::update(MLTimer &aTimer)
 {
   double newValue = currentValue + dv;
@@ -59,5 +57,5 @@ double Fader::current()
 
 double Fader::brightnessToPWM(double aBrightness)
 {
-  return 1*((exp(aBrightness*4/100)-1)/(exp(4)-1));
+  return 100*((exp(aBrightness*4/1)-1)/(exp(4)-1));
 }

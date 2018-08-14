@@ -182,9 +182,9 @@ public:
       // - create and start API server for lethd server
       if (getStringOption("lethdapiport", apiport)) {
         fader = FaderPtr(new Fader(boost::bind(&LEthD::fadeUpdate, this, _1)));
-        lethdApi = LethdApiPtr(new LethdApi(message, fader, boost::bind(&LEthD::initFeature, this, _1)));
+        neuron = NeuronPtr(new Neuron(ledChain, boost::bind(&LEthD::neuronMeasure, this)));
+        lethdApi = LethdApiPtr(new LethdApi(message, fader, neuron, boost::bind(&LEthD::initFeature, this, _1)));
         lethdApi->start(apiport.c_str());
-        neuron = NeuronPtr(new Neuron(ledChain, lethdApi, boost::bind(&LEthD::neuronMeasure, this)));
       }
     } // if !terminated
     // app now ready to run (or cleanup when already terminated)
@@ -218,11 +218,11 @@ public:
     } else if(aData->get("neuron", o)) {
       LOG(LOG_INFO, "initialize neuron");
       neuron->initialize();
+      neuron->start(o->get("movingAverageCount")->doubleValue(), o->get("threshold")->doubleValue());
     }
   }
 
   void features(MLTimer &aTimer) {
-    if(neuron->isInitialized()) neuron->update();
     MainLoop::currentMainLoop().retriggerTimer(aTimer, 10*MilliSecond);
   }
 
@@ -233,7 +233,7 @@ public:
 
   double neuronMeasure() {
     double value = -1;
-    if (sensor0) sensor0->value();
+    if (sensor0) value = sensor0->value();
     return value;
   }
 

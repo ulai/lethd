@@ -27,6 +27,7 @@
 #include "jsoncomm.hpp"
 #include "textview.hpp"
 #include "fader.hpp"
+#include "neuron.hpp"
 
 namespace p44 {
 
@@ -39,10 +40,11 @@ namespace p44 {
     JsonCommPtr connection;
     TextViewPtr message;
     FaderPtr fader;
+    NeuronPtr neuron;
     InitFeatureCB initFeature;
 
   public:
-    LethdApi(TextViewPtr aMessage, FaderPtr aFader, InitFeatureCB aInitFeature);
+    LethdApi(TextViewPtr aMessage, FaderPtr aFader, NeuronPtr aNeuron, InitFeatureCB aInitFeature);
     void start(const char* aApiPort);
     void send(int aValue);
 
@@ -53,6 +55,7 @@ namespace p44 {
     void init(JsonObjectPtr aData);
     void now(JsonObjectPtr aData);
     void fade(JsonObjectPtr aData);
+    void fire(JsonObjectPtr aData);
     ErrorPtr processRequest(JsonObjectPtr aData);
   };
 

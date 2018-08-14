@@ -23,15 +23,45 @@
 
 using namespace p44;
 
-Neuron::Neuron(LEDChainCommPtr aLedChain, LethdApiPtr aLethdApi, NeuronMeasureCB aNeuronMesure)
+Neuron::Neuron(LEDChainCommPtr aledChain, NeuronMeasureCB aNeuronMesure)
 {
-  ledChain = aLedChain;
-  lethdApi = aLethdApi;
+  ledChain = aledChain;
   neuronMeasure = aNeuronMesure;
 }
 
-void Neuron::update()
+void Neuron::start(double aMovingAverageCount, double aThreshold)
+{
+  movingAverageCount = aMovingAverageCount;
+  threshold = aThreshold;
+  ticketMeasure.executeOnce(boost::bind(&Neuron::measure, this, _1));
+}
+
+void Neuron::fire()
+{
+  if(spikeState == SpikeFiring) return;
+  pos = 0;
+  spikeState = SpikeFiring;
+  ticketAnimateAxon.executeOnce(boost::bind(&Neuron::animateAxon, this, _1));
+}
+
+void Neuron::measure(MLTimer &aTimer)
 {
   double value = neuronMeasure();
-  avg = (avg * (MOVING_AVERAGE_COUNT - 1) + value) / MOVING_AVERAGE_COUNT;
+  avg = (avg * (movingAverageCount - 1) + value) / movingAverageCount;
+  if(avg > movingAverageCount) fire();
+  ticketMeasure.executeOnce(boost::bind(&Neuron::measure, this, _1), 10 * MilliSecond);
+}
+
+void Neuron::animateAxon(MLTimer &aTimer)
+{
+  pos++;
+  for(int i = 0; i < 50; i++) {
+    if(ledChain) ledChain->setColorXY(i, 0, i == pos ? 255 : 0, 0, 0);
+  }
+  if(ledChain) ledChain->show();
+  if(pos < 50) {
+    ticketAnimateAxon.executeOnce(boost::bind(&Neuron::animateAxon, this, _1), 10 * MilliSecond);
+  } else {
+    spikeState = SpikeIdle;
+  }
 }

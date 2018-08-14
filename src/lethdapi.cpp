@@ -78,6 +78,11 @@ void LethdApi::fade(JsonObjectPtr aData)
   fader->fade(from, to, t, start);
 }
 
+void LethdApi::fire(JsonObjectPtr aData)
+{
+  neuron->fire();
+}
+
 ErrorPtr LethdApi::processRequest(JsonObjectPtr aData)
 {
   ErrorPtr err;
@@ -92,6 +97,7 @@ ErrorPtr LethdApi::processRequest(JsonObjectPtr aData)
   m["init"] = boost::bind(&LethdApi::init, this, _1);
   m["now"] = boost::bind(&LethdApi::now, this, _1);
   m["fade"] = boost::bind(&LethdApi::fade, this, _1);
+  m["fire"] = boost::bind(&LethdApi::fire, this, _1);
 
   if(m.count(aCmd)) {
     m[aCmd](aData);
@@ -101,10 +107,11 @@ ErrorPtr LethdApi::processRequest(JsonObjectPtr aData)
   return LethdApiError::err("Unknown cmd: %s", aCmd.c_str());
 }
 
-LethdApi::LethdApi(TextViewPtr aMessage, FaderPtr aFader, InitFeatureCB aInitFeature)
+LethdApi::LethdApi(TextViewPtr aMessage, FaderPtr aFader, NeuronPtr aNeuron, InitFeatureCB aInitFeature)
 {
   message = aMessage;
   fader = aFader;
+  neuron = aNeuron;
   initFeature = aInitFeature;
 }
 

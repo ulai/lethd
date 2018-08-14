@@ -24,7 +24,6 @@
 
 #include "feature.hpp"
 #include "ledchaincomm.hpp"
-#include "lethdapi.hpp"
 
 namespace p44 {
 
@@ -33,23 +32,30 @@ namespace p44 {
   class Neuron : public Feature
   {
     LEDChainCommPtr ledChain;
-    LethdApiPtr lethdApi;
     NeuronMeasureCB neuronMeasure;
 
-    const double MOVING_AVERAGE_COUNT = 50;
-    const double THRESHOLD = 250;
+    double movingAverageCount = 20;
+    double threshold = 250;
     double avg = 0;
 
     enum SensorState { SensorIdle, SensorHit };
     SensorState sensorState = SensorIdle;
     enum SpikeState { SpikeIdle, SpikeFiring };
-    SpikeState spkieState = SpikeIdle;
+    SpikeState spikeState = SpikeIdle;
+
+    MLTicket ticketMeasure;
+    MLTicket ticketAnimateAxon;
+
+    int pos = 0;
 
   public:
-    Neuron(LEDChainCommPtr aledChain, LethdApiPtr aLethdApi, NeuronMeasureCB neuronMeasure);
-    void update();
+    Neuron(LEDChainCommPtr aledChain, NeuronMeasureCB neuronMeasure);
+    void start(double aMovingAverageCount, double aThreshold);
+    void fire();
 
   private:
+    void measure(MLTimer &aTimer);
+    void animateAxon(MLTimer &aTimer);
 
   };
 
