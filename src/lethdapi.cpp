@@ -63,7 +63,7 @@ void LethdApi::init(JsonObjectPtr aData)
 void LethdApi::now(JsonObjectPtr aData)
 {
   JsonObjectPtr answer = JsonObject::newObj();
-  answer->add("now", JsonObject::newInt64(MainLoop::now()));
+  answer->add("now", JsonObject::newInt64(MainLoop::unixtime()));
   connection->sendMessage(answer);
 }
 
@@ -72,8 +72,9 @@ void LethdApi::fade(JsonObjectPtr aData)
   double from = fader->current();
   if(aData->get("from")) from = aData->get("from")->doubleValue();
   double to = aData->get("to")->doubleValue();
-  int64_t t = aData->get("t")->int64Value();
-  MLMicroSeconds start = aData->get("t")->int64Value();
+  MLMicroSeconds t = aData->get("t")->int64Value() * MilliSecond;
+  MLMicroSeconds start = MainLoop::now();
+  if(aData->get("start")) MainLoop::unixTimeToMainLoopTime(aData->get("start")->int64Value() * MilliSecond);
   fader->fade(from, to, t, start);
 }
 

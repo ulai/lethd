@@ -28,17 +28,36 @@ Fader::Fader(FaderUpdateCB aFaderUpdate)
   faderUpdate = aFaderUpdate;
 }
 
-void Fader::fade(double from, double to, int64_t t, MLMicroSeconds start)
+void Fader::fade(double aFrom, double aTo, MLMicroSeconds aFadeTime, MLMicroSeconds aStartTime)
 {
-  faderUpdate(to);
+  if(fabs(aFrom - aTo) < 1e-4) return;
+  currentValue = aFrom;
+  to = aTo;
+  dv = (aTo - aFrom) / (aFadeTime / dt);
+  ticket.executeOnceAt(boost::bind(&Fader::update, this, _1), aStartTime);
 }
 
-void Fader::update()
-{
 
+
+void Fader::update(MLTimer &aTimer)
+{
+  double newValue = currentValue + dv;
+  bool done = false;
+  if(dv > 0 && newValue >= to || dv < 0 && newValue <= to) {
+    newValue = to;
+    done = true;
+  }
+  currentValue = newValue;
+  faderUpdate(brightnessToPWM(currentValue));
+  if(!done) MainLoop::currentMainLoop().retriggerTimer(aTimer, dt);
 }
 
 double Fader::current()
 {
   return currentValue;
+}
+
+double Fader::brightnessToPWM(double aBrightness)
+{
+  return 1*((exp(aBrightness*4/100)-1)/(exp(4)-1));
 }

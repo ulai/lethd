@@ -222,7 +222,6 @@ public:
   }
 
   void features(MLTimer &aTimer) {
-    if(fader->isInitialized()) fader->update();
     if(neuron->isInitialized()) neuron->update();
     MainLoop::currentMainLoop().retriggerTimer(aTimer, 10*MilliSecond);
   }

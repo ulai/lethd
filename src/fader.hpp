@@ -23,6 +23,7 @@
 #define __lethd_fader_hpp__
 
 #include "feature.hpp"
+#include <math.h>
 
 namespace p44 {
 
@@ -32,15 +33,31 @@ namespace p44 {
   {
     FaderUpdateCB faderUpdate;
     double currentValue = 0;
+    const MLMicroSeconds dt = 20 * MilliSecond;
+    double to;
+    double dv;
+    MLTicket ticket;
 
   public:
     Fader(FaderUpdateCB aFaderUpdate);
-    void update();
-    void fade(double from, double to, int64_t t, MLMicroSeconds start);
+    void fade(double aFrom, double aTo, MLMicroSeconds aFadeTime, MLMicroSeconds aStartTime);
     double current();
 
   private:
-
+    // PWM    = PWM value
+    // maxPWM = max PWM value
+    // B      = brightness
+    // maxB   = max brightness value
+    // S      = dim Curve Exponent (1=linear, 2=quadratic, ...)
+    //
+    //                   (B*S/maxB)
+    //                 e            - 1
+    // PWM =  maxPWM * ----------------
+    //                      S
+    //                    e   - 1
+    //
+    double brightnessToPWM(double aBrightness);
+    void update(MLTimer &aTimer);
   };
 
   typedef boost::intrusive_ptr<Fader> FaderPtr;
