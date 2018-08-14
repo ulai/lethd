@@ -20,6 +20,7 @@
 //
 
 #include "view.hpp"
+#include "ledchaincomm.hpp" // for brightnessToPwm and pwmToBrightness
 
 using namespace p44;
 
@@ -219,7 +220,9 @@ PixelColor View::colorAt(int aX, int aY)
 
 uint8_t p44::dimVal(uint8_t aVal, uint16_t aDim)
 {
-  return ((aDim+1)*aVal)>>8;
+  uint32_t d = (aDim+1)*aVal;
+  if (d>0xFFFF) return 0xFF;
+  return d>>8;
 }
 
 
@@ -290,22 +293,41 @@ void p44::mixinPixel(PixelColor &aMainPixel, PixelColor aOutsidePixel, uint8_t a
   if (aAmountOutside>0) {
     // mixed transparency
     if (aMainPixel.a!=255 || aOutsidePixel.a!=255) {
-      uint8_t alpha = dimVal(aMainPixel.a, 255-aAmountOutside) + dimVal(aOutsidePixel.a, aAmountOutside);
+      uint8_t alpha = dimVal(aMainPixel.a, pwmToBrightness(255-aAmountOutside)) + dimVal(aOutsidePixel.a, pwmToBrightness(aAmountOutside));
       if (alpha>0) {
         // calculation only needed for non-transparent result
         alpahDimPixel(aMainPixel);
         alpahDimPixel(aOutsidePixel);
         uint16_t ab = 65025/alpha;
-        dimPixel(aMainPixel, 255-aAmountOutside);
-        addToPixel(aMainPixel, dimmedPixel(aOutsidePixel, aAmountOutside));
-        dimPixel(aMainPixel, ab);
-        aMainPixel.a = alpha;
+        // Note: aAmountOutside is on the energy scale, not brightness, so need to convert to perceived brightness!
+        dimPixel(aMainPixel, pwmToBrightness(255-aAmountOutside));
+        dimPixel(aOutsidePixel, pwmToBrightness(aAmountOutside));
+        uint16_t r = ((uint32_t)(aMainPixel.r+aOutsidePixel.r+1) * ab)>>8;
+        uint16_t g = ((uint32_t)(aMainPixel.g+aOutsidePixel.g+1) * ab)>>8;
+        uint16_t b = ((uint32_t)(aMainPixel.b+aOutsidePixel.b+1) * ab)>>8;
+        uint16_t m = r; if (g>m) m = g; if (b>m) m = b; // max
+        if (m>255) {
+          // max values outside, clip and boost alpha
+          aMainPixel.r = r>255 ? 255 : r;
+          aMainPixel.g = g>255 ? 255 : g;
+          aMainPixel.b = b>255 ? 255 : b;
+          uint16_t ar = (uint16_t)alpha*256/m;
+          aMainPixel.a = ar>255 ? 255 : ar;
+        }
+        else {
+          // sum is within possible max
+          aMainPixel.r = r;
+          aMainPixel.g = g;
+          aMainPixel.b = b;
+          aMainPixel.a = alpha;
+        }
       }
     }
     else {
       // no alpha, simplified case
-      dimPixel(aMainPixel, 255-aAmountOutside);
-      addToPixel(aMainPixel, dimmedPixel(aOutsidePixel, aAmountOutside));
+      // Note: aAmountOutside is on the energy scale, not brightness, so need to convert to perceived brightness!
+      dimPixel(aMainPixel, pwmToBrightness(255-aAmountOutside));
+      addToPixel(aMainPixel, dimmedPixel(aOutsidePixel, pwmToBrightness(aAmountOutside)));
     }
   }
 }
@@ -313,9 +335,9 @@ void p44::mixinPixel(PixelColor &aMainPixel, PixelColor aOutsidePixel, uint8_t a
 
 void p44::addToPixel(PixelColor &aPixel, PixelColor aPixelToAdd)
 {
-  aPixel.r += aPixelToAdd.r;
-  aPixel.g += aPixelToAdd.g;
-  aPixel.b += aPixelToAdd.b;
+  increase(aPixel.r, aPixelToAdd.r);
+  increase(aPixel.g, aPixelToAdd.g);
+  increase(aPixel.b, aPixelToAdd.b);
 }
 
 
