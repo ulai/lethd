@@ -50,7 +50,7 @@ void Neuron::measure(MLTimer &aTimer)
 {
   double value = neuronMeasure();
   avg = (avg * (movingAverageCount - 1) + value) / movingAverageCount;
-  if(avg > movingAverageCount) fire(avg);
+  if(avg > threshold) fire(avg);
   ticketMeasure.executeOnce(boost::bind(&Neuron::measure, this, _1), 10 * MilliSecond);
 }
 
