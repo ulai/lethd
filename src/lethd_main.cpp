@@ -189,7 +189,7 @@ public:
     if (ledChain) {
       // init scroll params
       numScrollSteps = -1; // endless
-      scrollStepX = 0.1;
+      scrollStepX = 0.25;
       scrollStepY = 0;
       scrollStepInterval = 20*MilliSecond;
       // create views
@@ -200,6 +200,8 @@ public:
       message->setText("Hello World +++ ");
       dispView = ViewScrollerPtr(new ViewScroller);
       dispView->setFrame(ledBorderLeft, 0, ledCols-ledBorderLeft-ledBorderRight, ledRows);
+      dispView->setFullFrameContent();
+      dispView->setOrientation(ledOrientation);
       dispView->setBackGroundColor(black); // not transparent!
       dispView->setScrolledView(message);
       // set up auto-scroll
@@ -350,7 +352,7 @@ public:
         // set
         if (message && aData->get("text", o)) {
           // text brightness
-          message->setAlpha(o->doubleValue()/100*255);
+          dispView->setAlpha(o->doubleValue()/100*255);
         }
         if (pwmDimmer && aData->get("light", o)) {
           // light brightness
@@ -407,6 +409,11 @@ public:
           }
           doneSomething = true;
         }
+        if (aData->get("scrollstart", o)) {
+          MLMicroSeconds start = MainLoop::unixTimeToMainLoopTime(o->int64Value());
+          if (dispView) dispView->startScroll(scrollStepX, scrollStepY, scrollStepInterval, numScrollSteps, start);
+          doneSomething = true;
+        }
         if (aData->get("color", o)) {
           PixelColor p = webColorToPixel(o->stringValue());
           if (p.a==255) p.a = message->getAlpha();
@@ -421,6 +428,16 @@ public:
         }
         if (aData->get("spacing", o)) {
           message->setTextSpacing(o->int32Value());
+          doneSomething = true;
+        }
+        if (aData->get("orientation", o)) {
+          ledOrientation = o->int32Value();
+          dispView->setOrientation(ledOrientation);
+          doneSomething = true;
+        }
+        if (aData->get("startx", o)) {
+          // start x offset
+          dispView->setContentOffset(-o->int32Value(), 0);
           doneSomething = true;
         }
       }
@@ -438,6 +455,7 @@ public:
         answer->add("scrollstepx", JsonObject::newDouble(dispView->getStepX()));
         answer->add("scrollstepy", JsonObject::newDouble(dispView->getStepY()));
         answer->add("scrollsteptime", JsonObject::newDouble(dispView->getScrollStepInterval()/MilliSecond));
+        answer->add("unixtime", JsonObject::newInt64(MainLoop::unixtime()));
       }
       aRequestDoneCB(answer, ErrorPtr());
       return true;
