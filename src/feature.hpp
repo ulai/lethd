@@ -19,34 +19,30 @@
 //  along with pixelboardd. If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef __lethd_fader_hpp__
-#define __lethd_fader_hpp__
+#ifndef __lethd_feature_hpp__
+#define __lethd_feature_hpp__
 
-#include "feature.hpp"
+#include "p44utils_common.hpp"
 
 namespace p44 {
 
-  typedef boost::function<void (double aValue)> FaderUpdateCB;
-
-  class Fader : public Feature
+  class Feature : public P44Obj
   {
-    FaderUpdateCB faderUpdate;
-    double currentValue = 0;
+    bool initialized = false;
 
   public:
-    Fader(FaderUpdateCB aFaderUpdate);
-    void update();
-    void fade(double from, double to, int64_t t, MLMicroSeconds start);
-    double current();
+    Feature();
+    void initialize();
+    bool isInitialized();
 
   private:
 
   };
 
-  typedef boost::intrusive_ptr<Fader> FaderPtr;
+  typedef boost::intrusive_ptr<Feature> FeaturePtr;
 
 } // namespace p44
 
 
 
-#endif /* __lethd_fader_hpp__ */
+#endif /* __lethd_feature_hpp__ */

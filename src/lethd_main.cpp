@@ -181,8 +181,10 @@ public:
 
       // - create and start API server for lethd server
       if (getStringOption("lethdapiport", apiport)) {
+        fader = FaderPtr(new Fader(boost::bind(&LEthD::fadeUpdate, this, _1)));
         lethdApi = LethdApiPtr(new LethdApi(message, fader, boost::bind(&LEthD::initFeature, this, _1)));
         lethdApi->start(apiport.c_str());
+        neuron = NeuronPtr(new Neuron(ledChain, lethdApi, boost::bind(&LEthD::neuronMeasure, this)));
       }
     } // if !terminated
     // app now ready to run (or cleanup when already terminated)
@@ -197,7 +199,7 @@ public:
       message = TextViewPtr(new TextView(ledBorderLeft, 0, ledCols-ledBorderLeft-ledBorderRight, (View::Orientation)ledOrientation));
       message->setBackGroundColor(black); // not transparent!
       message->setText("Hello World", true);
-      MainLoop::currentMainLoop().executeNow(boost::bind(&LEthD::step, this, _1));
+      //MainLoop::currentMainLoop().executeNow(boost::bind(&LEthD::step, this, _1));
     }
 
     MainLoop::currentMainLoop().executeNow(boost::bind(&LEthD::features, this, _1));
@@ -212,20 +214,21 @@ public:
       // TODO init text, ledchain etc.
     } else if(aData->get("light", o)) {
       LOG(LOG_INFO, "initialize fader");
-      if(!fader) fader = new Fader(boost::bind(&LEthD::fadeUpdate, this, _1));
+      fader->initialize();
     } else if(aData->get("neuron", o)) {
       LOG(LOG_INFO, "initialize neuron");
-      if(!neuron) neuron = new Neuron(ledChain, lethdApi, boost::bind(&LEthD::neuronMeasure, this));
+      neuron->initialize();
     }
   }
 
   void features(MLTimer &aTimer) {
-    if(fader) fader->update();
-    if(neuron) neuron->update();
+    if(fader->isInitialized()) fader->update();
+    if(neuron->isInitialized()) neuron->update();
     MainLoop::currentMainLoop().retriggerTimer(aTimer, 10*MilliSecond);
   }
 
   void fadeUpdate(double aValue) {
+    LOG(LOG_INFO, "fadeUpdate %f", aValue);
     if (pwmDimmer) pwmDimmer->setValue(aValue);
   }
 

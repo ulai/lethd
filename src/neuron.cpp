@@ -33,4 +33,5 @@ Neuron::Neuron(LEDChainCommPtr aLedChain, LethdApiPtr aLethdApi, NeuronMeasureCB
 void Neuron::update()
 {
   double value = neuronMeasure();
+  avg = (avg * (MOVING_AVERAGE_COUNT - 1) + value) / MOVING_AVERAGE_COUNT;
 }

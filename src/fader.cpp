@@ -30,7 +30,7 @@ Fader::Fader(FaderUpdateCB aFaderUpdate)
 
 void Fader::fade(double from, double to, int64_t t, MLMicroSeconds start)
 {
-
+  faderUpdate(to);
 }
 
 void Fader::update()

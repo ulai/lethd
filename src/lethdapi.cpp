@@ -92,7 +92,10 @@ ErrorPtr LethdApi::processRequest(JsonObjectPtr aData)
   m["now"] = boost::bind(&LethdApi::now, this, _1);
   m["fade"] = boost::bind(&LethdApi::fade, this, _1);
 
-  if(m.count(aCmd)) m[aCmd](aData);
+  if(m.count(aCmd)) {
+    m[aCmd](aData);
+    return err;
+  }
 
   return LethdApiError::err("Unknown cmd: %s", aCmd.c_str());
 }

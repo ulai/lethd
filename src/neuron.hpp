@@ -22,7 +22,7 @@
 #ifndef __lethd_neuron_hpp__
 #define __lethd_neuron_hpp__
 
-#include "p44utils_common.hpp"
+#include "feature.hpp"
 #include "ledchaincomm.hpp"
 #include "lethdapi.hpp"
 
@@ -30,11 +30,20 @@ namespace p44 {
 
   typedef boost::function<double ()> NeuronMeasureCB;
 
-  class Neuron : public P44Obj
+  class Neuron : public Feature
   {
     LEDChainCommPtr ledChain;
     LethdApiPtr lethdApi;
     NeuronMeasureCB neuronMeasure;
+
+    const double MOVING_AVERAGE_COUNT = 50;
+    const double THRESHOLD = 250;
+    double avg = 0;
+
+    enum SensorState { SensorIdle, SensorHit };
+    SensorState sensorState = SensorIdle;
+    enum SpikeState { SpikeIdle, SpikeFiring };
+    SpikeState spkieState = SpikeIdle;
 
   public:
     Neuron(LEDChainCommPtr aledChain, LethdApiPtr aLethdApi, NeuronMeasureCB neuronMeasure);

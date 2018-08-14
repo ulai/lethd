@@ -130,4 +130,6 @@ lethd_SOURCES = \
   src/fader.hpp \
   src/neuron.cpp \
   src/neuron.hpp \
+  src/feature.cpp \
+  src/feature.hpp \
   src/lethd_main.cpp
