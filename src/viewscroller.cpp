@@ -182,7 +182,9 @@ void ViewScroller::startScroll(double aStepX, double aStepY, MLMicroSeconds aInt
   scrollStepY_milli = aStepY*1000;
   scrollStepInterval = aInterval;
   scrollSteps = aNumSteps;
-  nextScrollStepAt = aStartTime==Never ? MainLoop::now() : aStartTime;
+  MLMicroSeconds now = MainLoop::now();
+  // do not allow setting scroll step into the past, as this would cause massive catch-up
+  nextScrollStepAt = aStartTime==Never || aStartTime<now ? now : aStartTime;
   scrollCompletedCB = aCompletedCB;
 }
 
