@@ -28,11 +28,13 @@
 namespace p44 {
 
   typedef boost::function<double ()> NeuronMeasureCB;
+  typedef boost::function<void (double)> NeuronSpikeCB;
 
   class Neuron : public Feature
   {
     LEDChainCommPtr ledChain;
     NeuronMeasureCB neuronMeasure;
+    NeuronSpikeCB neuronSpike;
 
     double movingAverageCount = 20;
     double threshold = 250;
@@ -49,9 +51,9 @@ namespace p44 {
     int pos = 0;
 
   public:
-    Neuron(LEDChainCommPtr aledChain, NeuronMeasureCB neuronMeasure);
+    Neuron(LEDChainCommPtr aledChain, NeuronMeasureCB neuronMeasure, NeuronSpikeCB neuronSpike);
     void start(double aMovingAverageCount, double aThreshold);
-    void fire();
+    void fire(double aValue = 0);
 
   private:
     void measure(MLTimer &aTimer);

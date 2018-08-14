@@ -23,10 +23,11 @@
 
 using namespace p44;
 
-Neuron::Neuron(LEDChainCommPtr aledChain, NeuronMeasureCB aNeuronMesure)
+Neuron::Neuron(LEDChainCommPtr aledChain, NeuronMeasureCB aNeuronMesure, NeuronSpikeCB aNeuronSpike)
 {
   ledChain = aledChain;
   neuronMeasure = aNeuronMesure;
+  neuronSpike = aNeuronSpike;
 }
 
 void Neuron::start(double aMovingAverageCount, double aThreshold)
@@ -36,9 +37,10 @@ void Neuron::start(double aMovingAverageCount, double aThreshold)
   ticketMeasure.executeOnce(boost::bind(&Neuron::measure, this, _1));
 }
 
-void Neuron::fire()
+void Neuron::fire(double aValue)
 {
   if(spikeState == SpikeFiring) return;
+  neuronSpike(aValue);
   pos = 0;
   spikeState = SpikeFiring;
   ticketAnimateAxon.executeOnce(boost::bind(&Neuron::animateAxon, this, _1));
@@ -48,7 +50,7 @@ void Neuron::measure(MLTimer &aTimer)
 {
   double value = neuronMeasure();
   avg = (avg * (movingAverageCount - 1) + value) / movingAverageCount;
-  if(avg > movingAverageCount) fire();
+  if(avg > movingAverageCount) fire(avg);
   ticketMeasure.executeOnce(boost::bind(&Neuron::measure, this, _1), 10 * MilliSecond);
 }
 

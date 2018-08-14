@@ -124,11 +124,11 @@ void LethdApi::start(const char* aApiPort)
   LOG(LOG_INFO, "LEthDApi listening on %s", aApiPort);
 }
 
-void LethdApi::send(int aValue)
+void LethdApi::send(double aValue)
 {
   if(!connection) return;
   JsonObjectPtr aMessage = JsonObject::newObj();
-  aMessage->add("sensor", JsonObject::newInt32(aValue));
+  aMessage->add("sensor", JsonObject::newDouble(aValue));
   connection->sendMessage(aMessage);
 }
 

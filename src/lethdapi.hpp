@@ -46,7 +46,7 @@ namespace p44 {
   public:
     LethdApi(TextViewPtr aMessage, FaderPtr aFader, NeuronPtr aNeuron, InitFeatureCB aInitFeature);
     void start(const char* aApiPort);
-    void send(int aValue);
+    void send(double aValue);
 
   private:
     SocketCommPtr apiConnectionHandler(SocketCommPtr aServerSocketComm);

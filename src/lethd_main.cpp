@@ -182,7 +182,7 @@ public:
       // - create and start API server for lethd server
       if (getStringOption("lethdapiport", apiport)) {
         fader = FaderPtr(new Fader(boost::bind(&LEthD::fadeUpdate, this, _1)));
-        neuron = NeuronPtr(new Neuron(ledChain, boost::bind(&LEthD::neuronMeasure, this)));
+        neuron = NeuronPtr(new Neuron(ledChain, boost::bind(&LEthD::neuronMeasure, this), boost::bind(&LEthD::neuronSpike, this, _1)));
         lethdApi = LethdApiPtr(new LethdApi(message, fader, neuron, boost::bind(&LEthD::initFeature, this, _1)));
         lethdApi->start(apiport.c_str());
       }
@@ -235,6 +235,10 @@ public:
     double value = -1;
     if (sensor0) value = sensor0->value();
     return value;
+  }
+
+  void neuronSpike(double aValue) {
+    lethdApi->send(aValue);
   }
 
   void step(MLTimer &aTimer)
