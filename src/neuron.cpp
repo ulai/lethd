@@ -56,12 +56,11 @@ void Neuron::measure(MLTimer &aTimer)
 
 void Neuron::animateAxon(MLTimer &aTimer)
 {
-  pos++;
   for(int i = 0; i < 50; i++) {
     if(ledChain) ledChain->setColorXY(i, 0, i == pos ? 255 : 0, 0, 0);
   }
   if(ledChain) ledChain->show();
-  if(pos < 50) {
+  if(pos++ < 50) {
     ticketAnimateAxon.executeOnce(boost::bind(&Neuron::animateAxon, this, _1), 10 * MilliSecond);
   } else {
     spikeState = SpikeIdle;

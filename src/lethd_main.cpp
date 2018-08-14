@@ -32,6 +32,8 @@
 
 #include <dirent.h>
 
+#include <boost/algorithm/string.hpp>
+
 using namespace p44;
 
 #define DEFAULT_LOGLEVEL LOG_NOTICE
@@ -105,6 +107,8 @@ public:
       { 0  , "borderleft",     true,  "columns;number of hidden columns on the left (default=" MKSTR(LED_MODULE_BORDER_LEFT) ")" },
       { 0  , "borderright",    true,  "columns;number of hidden columns on the right (default=" MKSTR(LED_MODULE_BORDER_RIGHT) ")" },
       { 0  , "lethdapiport",   true,  "port;server port number for lETHd JSON API (default=none)" },
+      { 0  , "neuron",         true,  "movingAverageCount,threshold;start neuron" },
+      { 0  , "light",          false, "start light" },
       { 0  , "jsonapiport",    true,  "port;server port number for JSON API (default=none)" },
       { 0  , "jsonapinonlocal",false, "allow JSON API from non-local clients" },
       { 0  , "button",         true,  "input pinspec; device button" },
@@ -185,6 +189,18 @@ public:
         neuron = NeuronPtr(new Neuron(ledChain, boost::bind(&LEthD::neuronMeasure, this), boost::bind(&LEthD::neuronSpike, this, _1)));
         lethdApi = LethdApiPtr(new LethdApi(message, fader, neuron, boost::bind(&LEthD::initFeature, this, _1)));
         lethdApi->start(apiport.c_str());
+        string s;
+        if (getStringOption("neuron", s)) {
+          std::vector<std::string> neuronOptions;
+          boost::split(neuronOptions, s, boost::is_any_of(","), boost::token_compress_on);
+          int movingAverageCount = atoi(neuronOptions[0].c_str());
+          int threshold = atoi(neuronOptions[1].c_str());
+          neuron->initialize();
+          neuron->start(movingAverageCount, threshold);
+        }
+        if (getOption("light")) {
+          fader->initialize();
+        }
       }
     } // if !terminated
     // app now ready to run (or cleanup when already terminated)

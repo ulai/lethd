@@ -40,8 +40,6 @@ namespace p44 {
     double threshold = 250;
     double avg = 0;
 
-    enum SensorState { SensorIdle, SensorHit };
-    SensorState sensorState = SensorIdle;
     enum SpikeState { SpikeIdle, SpikeFiring };
     SpikeState spikeState = SpikeIdle;
 
@@ -64,7 +62,5 @@ namespace p44 {
   typedef boost::intrusive_ptr<Neuron> NeuronPtr;
 
 } // namespace p44
-
-
 
 #endif /* __lethd_neuron_hpp__ */
