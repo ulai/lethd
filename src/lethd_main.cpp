@@ -196,6 +196,7 @@ public:
       message = TextViewPtr(new TextView);
       message->setFrame(0, 0, 1500, 7);
       message->setBackGroundColor(transparent);
+//      message->setBackGroundColor(black);
       message->setWrapMode(View::wrapX);
       message->setText("Hello World +++ ");
       dispView = ViewScrollerPtr(new ViewScroller);
@@ -212,16 +213,22 @@ public:
   }
 
 
+  #define MAX_STEP_INTERVAL (20*MilliSecond)
+
   void step(MLTimer &aTimer)
   {
+    MLMicroSeconds nextCall = Infinite;
     if (dispView) {
-      bool complete;
       do {
-        complete = dispView->step();
-      } while (!complete);
+        nextCall = dispView->step();
+      } while (nextCall==0);
       updateDisplay();
     }
-    MainLoop::currentMainLoop().retriggerTimer(aTimer, 2*MilliSecond);
+    MLMicroSeconds now = MainLoop::now();
+    if (nextCall<0 || nextCall-now>MAX_STEP_INTERVAL) {
+      nextCall = now+MAX_STEP_INTERVAL;
+    }
+    MainLoop::currentMainLoop().retriggerTimer(aTimer, nextCall, 0, MainLoop::absolute);
   }
 
 

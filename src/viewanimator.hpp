@@ -80,10 +80,10 @@ namespace p44 {
     /// clear all steps
     virtual void clear() P44_OVERRIDE;
 
-    /// calculate changes on the display, return true if any
-    /// @return true if complete, false if step() would like to be called immediately again
-    /// @note this is called on the active page at least once per mainloop cycle
-    virtual bool step() P44_OVERRIDE;
+    /// calculate changes on the display, return time of next change
+    /// @return Infinite if there is no immediate need to call step again, otherwise mainloop time of when to call again latest
+    /// @note this must be called as demanded by return value, and after making changes to the view
+    virtual MLMicroSeconds step() P44_OVERRIDE;
 
     /// return if anything changed on the display since last call
     virtual bool isDirty() P44_OVERRIDE;
@@ -102,7 +102,7 @@ namespace p44 {
 
   private:
 
-    void stepAnimation();
+    MLMicroSeconds stepAnimation();
 
   };
   typedef boost::intrusive_ptr<ViewAnimator> ViewAnimatorPtr;

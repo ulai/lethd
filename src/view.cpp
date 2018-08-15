@@ -72,15 +72,18 @@ void View::clear()
 }
 
 
-bool View::step()
+MLMicroSeconds View::step()
 {
   // check fading
   if (targetAlpha>=0) {
-    double timeDone = (double)(MainLoop::now()-startTime)/fadeTime;
+    MLMicroSeconds now = MainLoop::now();
+    double timeDone = (double)(now-startTime)/fadeTime;
     if (timeDone<1) {
       // continue fading
       int currentAlpha = targetAlpha-(1-timeDone)*fadeDist;
       setAlpha(currentAlpha);
+      // return recommended call-again-time for smooth fading
+      return now+fadeTime/fadeDist; // single alpha steps
     }
     else {
       // target alpha reached
@@ -94,7 +97,7 @@ bool View::step()
       }
     }
   }
-  return true; // completed
+  return Infinite; // completed
 }
 
 

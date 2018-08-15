@@ -68,15 +68,16 @@ void ViewStack::clear()
 }
 
 
-bool ViewStack::step()
+MLMicroSeconds ViewStack::step()
 {
-  bool complete = inherited::step();
+  MLMicroSeconds nextCall = inherited::step();
   for (ViewsList::iterator pos = viewStack.begin(); pos!=viewStack.end(); ++pos) {
-    if (!(*pos)->step()) {
-      complete = false;
+    MLMicroSeconds n = (*pos)->step();
+    if (nextCall<0 || (n>0 && n<nextCall)) {
+      nextCall = n;
     }
   }
-  return complete;
+  return nextCall;
 }
 
 

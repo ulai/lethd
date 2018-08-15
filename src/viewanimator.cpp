@@ -59,14 +59,21 @@ void ViewAnimator::pushStep(ViewPtr aView, MLMicroSeconds aShowTime, MLMicroSeco
 }
 
 
-bool ViewAnimator::step()
+MLMicroSeconds ViewAnimator::step()
 {
-  bool complete = inherited::step();
+  MLMicroSeconds nextCall = inherited::step();
+  MLMicroSeconds n;
   if (currentStep<sequence.size()) {
-    sequence[currentStep].view->step();
+    n = sequence[currentStep].view->step();
+    if (nextCall<0 || (n>0 && n<nextCall)) {
+      nextCall = n;
+    }
   }
-  stepAnimation();
-  return complete;
+  n = stepAnimation();
+  if (nextCall<0 || (n>0 && n<nextCall)) {
+    nextCall = n;
+  }
+  return nextCall;
 }
 
 
@@ -78,7 +85,7 @@ void ViewAnimator::stopAnimation()
 }
 
 
-void ViewAnimator::stepAnimation()
+MLMicroSeconds ViewAnimator::stepAnimation()
 {
   if (currentStep<sequence.size()) {
     MLMicroSeconds now = MainLoop::now();
@@ -95,7 +102,8 @@ void ViewAnimator::stepAnimation()
         }
         animationState = as_show;
         lastStateChange = now;
-        break;
+        // next change we must handle is end of show time
+        return now+as.fadeInTime+as.showTime;
       case as_show:
         if (sinceLast>as.fadeInTime+as.showTime) {
           // check fadeout
@@ -107,11 +115,17 @@ void ViewAnimator::stepAnimation()
             goto ended;
           }
           lastStateChange = now;
+          // next change we must handle is end of fade out time
+          return now + as.fadeOutTime;
         }
-        break;
+        else {
+          // still waiting for end of show time
+          return lastStateChange+as.fadeInTime+as.showTime;
+        }
       case as_fadeout:
         if (sinceLast<as.fadeOutTime) {
-          break; // not yet
+          // next change is end of fade out
+          return lastStateChange+as.fadeOutTime;
         }
       ended:
         // end of this step
@@ -131,11 +145,13 @@ void ViewAnimator::stepAnimation()
           }
           else {
             stopAnimation();
+            return Infinite; // no need to call again for this animation
           }
         }
-        break;
+        return 0; // call again immediately to initiate next step
     }
   }
+  return Infinite;
 }
 
 

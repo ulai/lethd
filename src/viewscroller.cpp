@@ -54,11 +54,14 @@ void ViewScroller::clear()
 
 #define BUSYWAIT_TIME_TO_STEP (1*MilliSecond)
 
-bool ViewScroller::step()
+MLMicroSeconds ViewScroller::step()
 {
-  bool complete = inherited::step();
-  if (scrolledView && !scrolledView->step()) {
-    complete = false;
+  MLMicroSeconds nextCall = inherited::step();
+  if (scrolledView) {
+    MLMicroSeconds n = scrolledView->step();
+    if (nextCall<0 || (n>0 && n<nextCall)) {
+      nextCall = n;
+    }
   }
   // scroll
   if (scrollSteps!=0 && scrollStepInterval>0) {
@@ -66,10 +69,7 @@ bool ViewScroller::step()
     MLMicroSeconds now = MainLoop::now();
     MLMicroSeconds next = nextScrollStepAt-now; // time to next step
     if (next>0) {
-      if (next<BUSYWAIT_TIME_TO_STEP) {
-        // we want to be called quickly again when next step is near
-        complete = false;
-      }
+      nextCall = nextScrollStepAt;
     }
     else {
       // execute all step(s) pending
@@ -116,13 +116,14 @@ bool ViewScroller::step()
         // advance to next step
         next += scrollStepInterval;
         nextScrollStepAt += scrollStepInterval;
+        nextCall = nextScrollStepAt;
         if (next<0) {
           LOG(LOG_INFO, "ViewScroller: needs to catch-up steps -> call step() more often!");
         }
       }
     }
   }
-  return complete;
+  return nextCall;
 }
 
 
