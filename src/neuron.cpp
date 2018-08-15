@@ -39,10 +39,10 @@ void Neuron::start(double aMovingAverageCount, double aThreshold)
 
 void Neuron::fire(double aValue)
 {
-  if(spikeState == SpikeFiring) return;
+  if(axonState == AxonFiring) return;
   neuronSpike(aValue);
   pos = 0;
-  spikeState = SpikeFiring;
+  axonState = AxonFiring;
   ticketAnimateAxon.executeOnce(boost::bind(&Neuron::animateAxon, this, _1));
 }
 
@@ -56,13 +56,26 @@ void Neuron::measure(MLTimer &aTimer)
 
 void Neuron::animateAxon(MLTimer &aTimer)
 {
-  for(int i = 0; i < 50; i++) {
+  for(int i = 0; i < numAxonLeds; i++) {
     if(ledChain) ledChain->setColorXY(i, 0, i == pos ? 255 : 0, 0, 0);
   }
   if(ledChain) ledChain->show();
-  if(pos++ < 50) {
+  if(pos++ < numAxonLeds) {
     ticketAnimateAxon.executeOnce(boost::bind(&Neuron::animateAxon, this, _1), 10 * MilliSecond);
   } else {
-    spikeState = SpikeIdle;
+    axonState = AxonIdle;
+  }
+}
+
+void Neuron::animateBody(MLTimer &aTimer)
+{
+  for(int i = 0; i < numBodyLeds; i++) {
+    if(ledChain) ledChain->setColorXY(i, 0, i == pos ? 255 : 0, 0, 0);
+  }
+  if(ledChain) ledChain->show();
+  if(pos++ < numAxonLeds) {
+    ticketAnimateAxon.executeOnce(boost::bind(&Neuron::animateAxon, this, _1), 10 * MilliSecond);
+  } else {
+    axonState = AxonIdle;
   }
 }
