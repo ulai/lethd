@@ -115,7 +115,7 @@ ErrorPtr LethdApi::processRequest(ApiRequestPtr aRequest)
   JsonObjectPtr reqData = aRequest->getRequest();
   JsonObjectPtr o;
   // first check global commands
-  if (reqData->get("cmd", o)) {
+  if (reqData->get("cmd", o, true)) {
     string cmd = o->stringValue();
     if (cmd=="init") {
       return init(aRequest);
@@ -125,7 +125,7 @@ ErrorPtr LethdApi::processRequest(ApiRequestPtr aRequest)
     }
   }
   // must be feature-specific command or property
-  if (!reqData->get("feature", o))
+  if (!reqData->get("feature", o, true))
     return LethdApiError::err("unknown global cmd / missing 'feature' attribute");
   if (!o->isType(json_type_string)) {
     return LethdApiError::err("'feature' attribute must be a string");
@@ -173,7 +173,7 @@ ErrorPtr LethdApi::init(ApiRequestPtr aRequest)
 ErrorPtr LethdApi::now(ApiRequestPtr aRequest)
 {
   JsonObjectPtr answer = JsonObject::newObj();
-  answer->add("now", JsonObject::newInt64(MainLoop::unixtime()));
+  answer->add("now", JsonObject::newInt64(MainLoop::unixtime()/MilliSecond));
   aRequest->sendResponse(answer, ErrorPtr());
   return ErrorPtr();
 }

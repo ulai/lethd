@@ -51,11 +51,11 @@ ErrorPtr Neuron::initialize(JsonObjectPtr aInitData)
 {
   initOperation();
   JsonObjectPtr o;
-  if (!aInitData->get("movingAverageCount", o)) {
+  if (!aInitData->get("movingAverageCount", o, true)) {
     return LethdApiError::err("missing 'movingAverageCount'");
   }
   double movingAverageCount = o->doubleValue();
-  if (!aInitData->get("threshold", o)) {
+  if (!aInitData->get("threshold", o, true)) {
     return LethdApiError::err("missing 'threshold'");
   }
   double threshold = o->doubleValue();

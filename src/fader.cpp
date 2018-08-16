@@ -67,12 +67,15 @@ ErrorPtr Fader::processRequest(ApiRequestPtr aRequest)
 ErrorPtr Fader::fade(ApiRequestPtr aRequest)
 {
   JsonObjectPtr data = aRequest->getRequest();
+  JsonObjectPtr o;
   double from = current();
-  if(data->get("from")) from = data->get("from")->doubleValue();
-  double to = data->get("to")->doubleValue();
-  MLMicroSeconds t = data->get("t")->int64Value() * MilliSecond;
+  if (data->get("from", o, true)) from = o->doubleValue();
+  double to = 50;
+  if (data->get("to", o, true)) to = o->doubleValue();
+  MLMicroSeconds t = 300*MilliSecond;
+  if (data->get("t", o, true)) t = o->int64Value() * MilliSecond;
   MLMicroSeconds start = MainLoop::now();
-  if(data->get("start")) MainLoop::unixTimeToMainLoopTime(data->get("start")->int64Value() * MilliSecond);
+  if (data->get("start", o, true)) start = MainLoop::unixTimeToMainLoopTime(o->int64Value() * MilliSecond);
   fade(from, to, t, start);
   return Error::ok();
 }

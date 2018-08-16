@@ -182,23 +182,23 @@ ErrorPtr DispMatrix::initialize(JsonObjectPtr aInitData)
     // configure
     JsonObjectPtr o;
     // - usually
-    if (panelCfg->get("cols", o)) {
+    if (panelCfg->get("cols", o, true)) {
       visiblecols = o->int32Value();
     }
-    if (panelCfg->get("orientation", o)) {
+    if (panelCfg->get("orientation", o, true)) {
       orientation = o->int32Value();
     }
-    if (panelCfg->get("offset", o)) {
+    if (panelCfg->get("offset", o, true)) {
       offsetX = o->int32Value();
     }
     // - special cases
-    if (panelCfg->get("rows", o)) {
+    if (panelCfg->get("rows", o, true)) {
       rows = o->int32Value();
     }
-    if (panelCfg->get("borderleft", o)) {
+    if (panelCfg->get("borderleft", o, true)) {
       borderLeft = o->int32Value();
     }
-    if (panelCfg->get("borderright", o)) {
+    if (panelCfg->get("borderright", o, true)) {
       borderRight = o->int32Value();
     }
     // now create panel
@@ -237,20 +237,20 @@ ErrorPtr DispMatrix::processRequest(ApiRequestPtr aRequest)
       long steps = -1; // forever
       MLMicroSeconds interval = 20*MilliSecond;
       MLMicroSeconds start = Never; // right away
-      if (data->get("stepx", o)) {
+      if (data->get("stepx", o, true)) {
         stepx = o->doubleValue();
       }
-      if (data->get("stepy", o)) {
+      if (data->get("stepy", o, true)) {
         stepy = o->doubleValue();
       }
-      if (data->get("steps", o)) {
+      if (data->get("steps", o, true)) {
         steps = o->int64Value();
       }
-      if (data->get("interval", o)) {
+      if (data->get("interval", o, true)) {
         interval = o->doubleValue()*MilliSecond;
       }
-      if (data->get("start", o)) {
-        start = MainLoop::unixTimeToMainLoopTime(o->int64Value());
+      if (data->get("start", o, true)) {
+        start = MainLoop::unixTimeToMainLoopTime(o->int64Value()*MilliSecond);
       }
       if (interval<MIN_SCROLL_STEP_INTERVAL) interval = MIN_SCROLL_STEP_INTERVAL;
       FOR_EACH_PANEL(dispView->startScroll(stepx, stepy, interval, steps, start));
@@ -259,10 +259,10 @@ ErrorPtr DispMatrix::processRequest(ApiRequestPtr aRequest)
     else if (cmd=="fade") {
       int to = 255;
       MLMicroSeconds t = 300*MilliSecond;
-      if (data->get("to", o)) {
+      if (data->get("to", o, true)) {
         to = o->doubleValue()*2.55;
       }
-      if (data->get("t", o)) {
+      if (data->get("t", o, true)) {
         t = o->doubleValue()*MilliSecond;
       }
       FOR_EACH_PANEL(dispView->fadeTo(to, t));
@@ -285,7 +285,7 @@ ErrorPtr DispMatrix::processRequest(ApiRequestPtr aRequest)
           answer->add("scrollstepx", JsonObject::newDouble(p->dispView->getStepX()));
           answer->add("scrollstepy", JsonObject::newDouble(p->dispView->getStepY()));
           answer->add("scrollsteptime", JsonObject::newDouble(p->dispView->getScrollStepInterval()/MilliSecond));
-          answer->add("unixtime", JsonObject::newInt64(MainLoop::unixtime()));
+          answer->add("unixtime", JsonObject::newInt64(MainLoop::unixtime()/MilliSecond));
         }
       }
       aRequest->sendResponse(answer, ErrorPtr());
@@ -295,28 +295,28 @@ ErrorPtr DispMatrix::processRequest(ApiRequestPtr aRequest)
   }
   else {
     // decode properties
-    if (data->get("text", o)) {
+    if (data->get("text", o, true)) {
       string msg = o->stringValue();
       FOR_EACH_PANEL(message->setText(msg));
     }
-    if (data->get("color", o)) {
+    if (data->get("color", o, true)) {
       PixelColor p = webColorToPixel(o->stringValue());
       FOR_EACH_PANEL(message->setTextColor(p));
     }
-    if (data->get("backgroundcolor", o)) {
+    if (data->get("backgroundcolor", o, true)) {
       PixelColor p = webColorToPixel(o->stringValue());
       FOR_EACH_PANEL(message->setBackGroundColor(p));
     }
-    if (data->get("spacing", o)) {
+    if (data->get("spacing", o, true)) {
       int spacing = o->int32Value();
       FOR_EACH_PANEL(message->setTextSpacing(spacing));
     }
-    if (data->get("offsetx", o)) {
-      double offs = o->int32Value();
+    if (data->get("offsetx", o, true)) {
+      double offs = o->doubleValue();
       FOR_EACH_PANEL(setOffsetX(offs));
     }
-    if (data->get("offsety", o)) {
-      double offs = o->int32Value();
+    if (data->get("offsety", o, true)) {
+      double offs = o->doubleValue();
       FOR_EACH_PANEL(dispView->setOffsetY(offs));
     }
     return Error::ok();
@@ -350,130 +350,3 @@ void DispMatrix::step(MLTimer &aTimer)
   }
   MainLoop::currentMainLoop().retriggerTimer(aTimer, nextCall, 0, MainLoop::absolute);
 }
-
-
-
-/*
-    else if (aUri=="brightness") {
-      if (aIsAction) {
-        // set
-        if (message && aData->get("text", o)) {
-          // text brightness
-          dispView->setAlpha(o->doubleValue()/100*255);
-        }
-        if (pwmDimmer && aData->get("light", o)) {
-          // light brightness
-          pwmDimmer->setValue(o->doubleValue());
-        }
-      }
-      // get
-      JsonObjectPtr answer = JsonObject::newObj();
-      if (message) answer->add("text", JsonObject::newInt32((double)(message->getAlpha())/255.0*100));
-      if (pwmDimmer) answer->add("light", JsonObject::newDouble(pwmDimmer->value()));
-      aRequestDoneCB(answer, ErrorPtr());
-      return true;
-    }
-    else if (aUri=="text") {
-      if (aIsAction) {
-        bool doneSomething = false;
-        if (aData->get("message", o)) {
-          if (message) message->setText(o->stringValue());
-          doneSomething = true;
-        }
-        if (aData->get("scrolloffsetx", o)) {
-          if (dispView) dispView->setOffsetX(o->doubleValue());
-          doneSomething = true;
-        }
-        if (aData->get("scrolloffsety", o)) {
-          if (dispView) dispView->setOffsetY(o->doubleValue());
-          doneSomething = true;
-        }
-        if (aData->get("scrollstepx", o)) {
-          scrollStepX = o->doubleValue();
-          if (dispView) dispView->startScroll(scrollStepX, scrollStepY, scrollStepInterval, numScrollSteps);
-          doneSomething = true;
-        }
-        if (aData->get("scrollstepy", o)) {
-          scrollStepY = o->doubleValue();
-          if (dispView) dispView->startScroll(scrollStepX, scrollStepY, scrollStepInterval, numScrollSteps);
-          doneSomething = true;
-        }
-        if (aData->get("scrollsteptime", o)) {
-          scrollStepInterval = o->doubleValue()*MilliSecond;
-          if (dispView) dispView->startScroll(scrollStepX, scrollStepY, scrollStepInterval, numScrollSteps);
-          doneSomething = true;
-        }
-        if (aData->get("scrollsteps", o)) {
-          int s = o->int32Value();
-          if (dispView) {
-            if (s==0) {
-              dispView->stopScroll();
-            }
-            else {
-              numScrollSteps = s;
-              dispView->startScroll(scrollStepX, scrollStepY, scrollStepInterval, numScrollSteps);
-            }
-          }
-          doneSomething = true;
-        }
-        if (aData->get("scrollstart", o)) {
-          MLMicroSeconds start = MainLoop::unixTimeToMainLoopTime(o->int64Value());
-          if (dispView) dispView->startScroll(scrollStepX, scrollStepY, scrollStepInterval, numScrollSteps, start);
-          doneSomething = true;
-        }
-        if (aData->get("color", o)) {
-          PixelColor p = webColorToPixel(o->stringValue());
-          if (p.a==255) p.a = message->getAlpha();
-          message->setTextColor(p);
-          doneSomething = true;
-        }
-        if (aData->get("backgroundcolor", o)) {
-          PixelColor p = webColorToPixel(o->stringValue());
-          if (p.a==255) p.a = message->getAlpha();
-          message->setBackGroundColor(p);
-          doneSomething = true;
-        }
-        if (aData->get("spacing", o)) {
-          message->setTextSpacing(o->int32Value());
-          doneSomething = true;
-        }
-        if (aData->get("orientation", o)) {
-          ledOrientation = o->int32Value();
-          dispView->setOrientation(ledOrientation);
-          doneSomething = true;
-        }
-        if (aData->get("startx", o)) {
-          // start x offset
-          dispView->setContentOffset(-o->int32Value(), 0);
-          doneSomething = true;
-        }
-      }
-      // get
-      JsonObjectPtr answer = JsonObject::newObj();
-      if (message) {
-        answer->add("text", JsonObject::newString(message->getText()));
-        answer->add("color", JsonObject::newString(pixelToWebColor(message->getTextColor())));
-        answer->add("spacing", JsonObject::newInt32(message->getTextSpacing()));
-        answer->add("backgroundcolor", JsonObject::newString(pixelToWebColor(message->getBackGroundColor())));
-      }
-      if (dispView) {
-        answer->add("scrolloffsetx", JsonObject::newDouble(dispView->getOffsetX()));
-        answer->add("scrolloffsety", JsonObject::newDouble(dispView->getOffsetY()));
-        answer->add("scrollstepx", JsonObject::newDouble(dispView->getStepX()));
-        answer->add("scrollstepy", JsonObject::newDouble(dispView->getStepY()));
-        answer->add("scrollsteptime", JsonObject::newDouble(dispView->getScrollStepInterval()/MilliSecond));
-        answer->add("unixtime", JsonObject::newInt64(MainLoop::unixtime()));
-      }
-      aRequestDoneCB(answer, ErrorPtr());
-      return true;
-    }
-    else if (aUri=="inputs") {
-      if (!aIsAction) {
-        JsonObjectPtr answer = JsonObject::newObj();
-        if (sensor0) answer->add("sensor0", JsonObject::newInt32(sensor0->value()));
-        if (sensor1) answer->add("sensor1", JsonObject::newInt32(sensor1->value()));
-        aRequestDoneCB(answer, ErrorPtr());
-        return true;
-      }
-    }
- */

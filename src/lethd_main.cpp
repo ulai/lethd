@@ -262,7 +262,7 @@ public:
         bool action = (method!="GET");
         // check for uploads
         string uploadedfile;
-        if (aRequest->get("uploadedfile", o)) {
+        if (aRequest->get("uploadedfile", o, true)) {
           uploadedfile = o->stringValue();
           upload = true;
           action = false; // other params are in the URI, not the POSTed upload
@@ -339,7 +339,7 @@ public:
     }
     else if (aUri=="log") {
       if (aIsAction) {
-        if (aData->get("level", o)) {
+        if (aData->get("level", o, true)) {
           SETLOGLEVEL(o->int32Value());
           aRequestDoneCB(JsonObjectPtr(), ErrorPtr());
           return true;
@@ -356,7 +356,7 @@ public:
 
     string cmd;
     JsonObjectPtr o;
-    if (aData->get("cmd", o)) {
+    if (aData->get("cmd", o, true)) {
       cmd = o->stringValue();
 //      if (cmd=="imageupload") {
 //        displayPage->loadPNGBackground(aUploadedFile);
