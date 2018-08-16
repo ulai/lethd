@@ -25,10 +25,17 @@
 #include "jsoncomm.hpp"
 #include "ledchaincomm.hpp"
 
-#include "textview.hpp"
+#include "lethdapi.hpp"
+#include "fader.hpp"
+#include "neuron.hpp"
+//#include "dispmatrix.hpp"
+// FIXME: factor out
 #include "viewscroller.hpp"
+#include "textview.hpp"
 
 #include <dirent.h>
+
+#include <boost/algorithm/string.hpp>
 
 using namespace p44;
 
@@ -78,10 +85,18 @@ class LEthD : public CmdLineApp
 
   MLTicket sampleTicket;
 
+  LethdApiPtr lethdApi;
+
+  FaderPtr fader;
+  NeuronPtr neuron;
+  //DispMatrixPtr dispMatrix;
+
+  // FIXME: factor out
   int numScrollSteps;
   double scrollStepX;
   double scrollStepY;
   MLMicroSeconds scrollStepInterval;
+
 
 public:
 
@@ -104,6 +119,9 @@ public:
       { 0  , "orientation",    true,  "orientation;text view orientation (default=0=normal)" },
       { 0  , "borderleft",     true,  "columns;number of hidden columns on the left (default=" MKSTR(LED_MODULE_BORDER_LEFT) ")" },
       { 0  , "borderright",    true,  "columns;number of hidden columns on the right (default=" MKSTR(LED_MODULE_BORDER_RIGHT) ")" },
+      { 0  , "lethdapiport",   true,  "port;server port number for lETHd JSON API (default=none)" },
+      { 0  , "neuron",         true,  "movingAverageCount,threshold;start neuron" },
+      { 0  , "light",          false, "start light" },
       { 0  , "jsonapiport",    true,  "port;server port number for JSON API (default=none)" },
       { 0  , "jsonapinonlocal",false, "allow JSON API from non-local clients" },
       { 0  , "button",         true,  "input pinspec; device button" },
@@ -173,9 +191,29 @@ public:
       string apiport;
       if (getStringOption("jsonapiport", apiport)) {
         apiServer = SocketCommPtr(new SocketComm(MainLoop::currentMainLoop()));
-        apiServer->setConnectionParams(NULL, apiport.c_str(), SOCK_STREAM, AF_INET);
+        apiServer->setConnectionParams(NULL, apiport.c_str(), SOCK_STREAM, AF_INET6);
         apiServer->setAllowNonlocalConnections(getOption("jsonapinonlocal"));
         apiServer->startServer(boost::bind(&LEthD::apiConnectionHandler, this, _1), 3);
+      }
+
+      // - create and start API server for lethd server
+      if (getStringOption("lethdapiport", apiport)) {
+        fader = FaderPtr(new Fader(boost::bind(&LEthD::fadeUpdate, this, _1)));
+        neuron = NeuronPtr(new Neuron(ledChain, boost::bind(&LEthD::neuronMeasure, this), boost::bind(&LEthD::neuronSpike, this, _1)));
+        lethdApi = LethdApiPtr(new LethdApi(message, fader, neuron, boost::bind(&LEthD::initFeature, this, _1)));
+        lethdApi->start(apiport.c_str());
+        string s;
+        if (getStringOption("neuron", s)) {
+          std::vector<std::string> neuronOptions;
+          boost::split(neuronOptions, s, boost::is_any_of(","), boost::token_compress_on);
+          int movingAverageCount = atoi(neuronOptions[0].c_str());
+          int threshold = atoi(neuronOptions[1].c_str());
+          neuron->initialize();
+          neuron->start(movingAverageCount, threshold);
+        }
+        if (getOption("light")) {
+          fader->initialize();
+        }
       }
     } // if !terminated
     // app now ready to run (or cleanup when already terminated)
@@ -196,7 +234,6 @@ public:
       message = TextViewPtr(new TextView);
       message->setFrame(0, 0, 1500, 7);
       message->setBackGroundColor(transparent);
-//      message->setBackGroundColor(black);
       message->setWrapMode(View::wrapX);
       message->setText("Hello World +++ ");
       dispView = ViewScrollerPtr(new ViewScroller);
@@ -210,8 +247,47 @@ public:
       // start stepping
       MainLoop::currentMainLoop().executeNow(boost::bind(&LEthD::step, this, _1));
     }
+
+    MainLoop::currentMainLoop().executeNow(boost::bind(&LEthD::features, this, _1));
   }
 
+
+  void initFeature(JsonObjectPtr aData)
+  {
+    ErrorPtr err;
+    JsonObjectPtr o;
+    LOG(LOG_INFO, "initFeature: %s", aData->c_strValue());
+
+    if(aData->get("text", o)) {
+      // TODO init text, ledchain etc.
+    } else if(aData->get("light", o)) {
+      LOG(LOG_INFO, "initialize fader");
+      fader->initialize();
+    } else if(aData->get("neuron", o)) {
+      LOG(LOG_INFO, "initialize neuron");
+      neuron->initialize();
+      neuron->start(o->get("movingAverageCount")->doubleValue(), o->get("threshold")->doubleValue());
+    }
+  }
+
+  void features(MLTimer &aTimer) {
+    MainLoop::currentMainLoop().retriggerTimer(aTimer, 10*MilliSecond);
+  }
+
+  void fadeUpdate(double aValue) {
+    LOG(LOG_INFO, "fadeUpdate %f", aValue);
+    if (pwmDimmer) pwmDimmer->setValue(aValue);
+  }
+
+  double neuronMeasure() {
+    double value = -1;
+    if (sensor0) value = sensor0->value();
+    return value;
+  }
+
+  void neuronSpike(double aValue) {
+    lethdApi->send(aValue);
+  }
 
   #define MAX_STEP_INTERVAL (20*MilliSecond)
 
@@ -230,7 +306,6 @@ public:
     }
     MainLoop::currentMainLoop().retriggerTimer(aTimer, nextCall, 0, MainLoop::absolute);
   }
-
 
   void updateDisplay()
   {

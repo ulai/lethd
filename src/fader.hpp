@@ -1,0 +1,69 @@
+//
+//  Copyright (c) 2016-2017 plan44.ch / Lukas Zeller, Zurich, Switzerland
+//
+//  Author: Ueli Wahlen <ueli@hotmail.com>
+//
+//  This file is part of lethd.
+//
+//  pixelboardd is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//
+//  pixelboardd is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with pixelboardd. If not, see <http://www.gnu.org/licenses/>.
+//
+
+#ifndef __lethd_fader_hpp__
+#define __lethd_fader_hpp__
+
+#include "feature.hpp"
+#include <math.h>
+
+namespace p44 {
+
+  typedef boost::function<void (double aValue)> FaderUpdateCB;
+
+  class Fader : public Feature
+  {
+    FaderUpdateCB faderUpdate;
+    double currentValue = 0;
+    const MLMicroSeconds dt = 20 * MilliSecond;
+    double to;
+    double dv;
+    MLTicket ticket;
+
+  public:
+    Fader(FaderUpdateCB aFaderUpdate);
+    void fade(double aFrom, double aTo, MLMicroSeconds aFadeTime, MLMicroSeconds aStartTime);
+    double current();
+
+  private:
+    // PWM    = PWM value
+    // maxPWM = max PWM value
+    // B      = brightness
+    // maxB   = max brightness value
+    // S      = dim Curve Exponent (1=linear, 2=quadratic, ...)
+    //
+    //                   (B*S/maxB)
+    //                 e            - 1
+    // PWM =  maxPWM * ----------------
+    //                      S
+    //                    e   - 1
+    //
+    double brightnessToPWM(double aBrightness);
+    void update(MLTimer &aTimer);
+  };
+
+  typedef boost::intrusive_ptr<Fader> FaderPtr;
+
+} // namespace p44
+
+
+
+#endif /* __lethd_fader_hpp__ */

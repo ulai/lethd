@@ -2,6 +2,9 @@
 *.xcodeproj/project.xcworkspace/xcuserdata/*.xcuserdatad/UserInterfaceState.xcuserstate
 *.xcodeproj/project.xcworkspace/xcshareddata/*.xcscmblueprint
 
+# VSCode
+.vscode/*
+
 # automake
 *.o
 .deps
