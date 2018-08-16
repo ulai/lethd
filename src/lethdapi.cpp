@@ -83,6 +83,14 @@ void LethdApi::fire(JsonObjectPtr aData)
   neuron->fire();
 }
 
+void LethdApi::setText(JsonObjectPtr aData)
+{
+  string text = aData->get("text")->stringValue();
+  MLMicroSeconds start = MainLoop::now();
+  if(aData->get("start")) MainLoop::unixTimeToMainLoopTime(aData->get("start")->int64Value() * MilliSecond);
+  //message->setText(text, start);
+}
+
 ErrorPtr LethdApi::processRequest(JsonObjectPtr aData)
 {
   ErrorPtr err;
@@ -98,6 +106,7 @@ ErrorPtr LethdApi::processRequest(JsonObjectPtr aData)
   m["now"] = boost::bind(&LethdApi::now, this, _1);
   m["fade"] = boost::bind(&LethdApi::fade, this, _1);
   m["fire"] = boost::bind(&LethdApi::fire, this, _1);
+  m["setText"] = boost::bind(&LethdApi::setText, this, _1);
 
   if(m.count(aCmd)) {
     m[aCmd](aData);

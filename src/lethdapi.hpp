@@ -56,6 +56,7 @@ namespace p44 {
     void now(JsonObjectPtr aData);
     void fade(JsonObjectPtr aData);
     void fire(JsonObjectPtr aData);
+    void setText(JsonObjectPtr aData);
     ErrorPtr processRequest(JsonObjectPtr aData);
   };
 
