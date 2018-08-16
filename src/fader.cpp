@@ -41,7 +41,7 @@ void Fader::update(MLTimer &aTimer)
 {
   double newValue = currentValue + dv;
   bool done = false;
-  if(dv > 0 && newValue >= to || dv < 0 && newValue <= to) {
+  if((dv > 0 && newValue >= to) || (dv < 0 && newValue <= to)) {
     newValue = to;
     done = true;
   }

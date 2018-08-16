@@ -11,6 +11,11 @@
 		ED19DD1220F797DA0012DE7E /* civetweb.c in Sources */ = {isa = PBXBuildFile; fileRef = ED19DD0E20F797DA0012DE7E /* civetweb.c */; };
 		ED19DD1720F7C3B60012DE7E /* analogio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED19DD1420F7C3B50012DE7E /* analogio.cpp */; };
 		ED19DD1820F7C3B60012DE7E /* pwm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED19DD1620F7C3B60012DE7E /* pwm.cpp */; };
+		ED34E4022125598B006F286C /* fader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED34E3FB2125598A006F286C /* fader.cpp */; };
+		ED34E4032125598B006F286C /* feature.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED34E3FC2125598B006F286C /* feature.cpp */; };
+		ED34E4042125598B006F286C /* neuron.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED34E3FE2125598B006F286C /* neuron.cpp */; };
+		ED34E4052125598B006F286C /* lethdapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED34E4012125598B006F286C /* lethdapi.cpp */; };
+		ED34E40821255A71006F286C /* dispmatrix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED34E40621255A70006F286C /* dispmatrix.cpp */; };
 		ED50D72C211F4914006D75A6 /* viewscroller.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED50D72A211F4914006D75A6 /* viewscroller.cpp */; };
 		ED53729B1DFC2CBE0066FF5A /* application.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED5372671DFC2CBE0066FF5A /* application.cpp */; };
 		ED53729C1DFC2CBE0066FF5A /* colorutils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED5372691DFC2CBE0066FF5A /* colorutils.cpp */; };
@@ -73,6 +78,16 @@
 		ED19DD1520F7C3B60012DE7E /* pwm.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = pwm.hpp; sourceTree = "<group>"; };
 		ED19DD1620F7C3B60012DE7E /* pwm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pwm.cpp; sourceTree = "<group>"; };
 		ED19DD1A20F8AEA00012DE7E /* configure.ac */ = {isa = PBXFileReference; lastKnownFileType = text; path = configure.ac; sourceTree = "<group>"; };
+		ED34E3FA2125598A006F286C /* fader.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = fader.hpp; sourceTree = "<group>"; };
+		ED34E3FB2125598A006F286C /* fader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fader.cpp; sourceTree = "<group>"; };
+		ED34E3FC2125598B006F286C /* feature.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = feature.cpp; sourceTree = "<group>"; };
+		ED34E3FD2125598B006F286C /* lethdapi.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = lethdapi.hpp; sourceTree = "<group>"; };
+		ED34E3FE2125598B006F286C /* neuron.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = neuron.cpp; sourceTree = "<group>"; };
+		ED34E3FF2125598B006F286C /* neuron.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = neuron.hpp; sourceTree = "<group>"; };
+		ED34E4002125598B006F286C /* feature.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = feature.hpp; sourceTree = "<group>"; };
+		ED34E4012125598B006F286C /* lethdapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = lethdapi.cpp; sourceTree = "<group>"; };
+		ED34E40621255A70006F286C /* dispmatrix.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = dispmatrix.cpp; sourceTree = "<group>"; };
+		ED34E40721255A71006F286C /* dispmatrix.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = dispmatrix.hpp; sourceTree = "<group>"; };
 		ED50D72A211F4914006D75A6 /* viewscroller.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = viewscroller.cpp; sourceTree = "<group>"; };
 		ED50D72B211F4914006D75A6 /* viewscroller.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = viewscroller.hpp; sourceTree = "<group>"; };
 		ED50D72D211F522B006D75A6 /* imageview.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = imageview.cpp; sourceTree = "<group>"; };
@@ -209,6 +224,16 @@
 				ED7108EC210E106700A9B57C /* viewstack.hpp */,
 				ED50D72D211F522B006D75A6 /* imageview.cpp */,
 				ED50D72E211F522B006D75A6 /* imageview.hpp */,
+				ED34E3FB2125598A006F286C /* fader.cpp */,
+				ED34E3FA2125598A006F286C /* fader.hpp */,
+				ED34E3FC2125598B006F286C /* feature.cpp */,
+				ED34E4002125598B006F286C /* feature.hpp */,
+				ED34E4012125598B006F286C /* lethdapi.cpp */,
+				ED34E3FD2125598B006F286C /* lethdapi.hpp */,
+				ED34E3FE2125598B006F286C /* neuron.cpp */,
+				ED34E3FF2125598B006F286C /* neuron.hpp */,
+				ED34E40621255A70006F286C /* dispmatrix.cpp */,
+				ED34E40721255A71006F286C /* dispmatrix.hpp */,
 				ED19DD0720F793030012DE7E /* lethd_main.cpp */,
 			);
 			path = src;
@@ -365,6 +390,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ED34E4052125598B006F286C /* lethdapi.cpp in Sources */,
 				ED5372A81DFC2CBE0066FF5A /* jsonwebclient.cpp in Sources */,
 				ED50D72C211F4914006D75A6 /* viewscroller.cpp in Sources */,
 				ED5372A11DFC2CBE0066FF5A /* gpio.cpp in Sources */,
@@ -375,16 +401,19 @@
 				ED5372AC1DFC2CBE0066FF5A /* p44obj.cpp in Sources */,
 				ED5372B31DFC2CBE0066FF5A /* utils.cpp in Sources */,
 				ED5372AB1DFC2CBE0066FF5A /* operationqueue.cpp in Sources */,
+				ED34E4042125598B006F286C /* neuron.cpp in Sources */,
 				ED53729C1DFC2CBE0066FF5A /* colorutils.cpp in Sources */,
 				ED53729F1DFC2CBE0066FF5A /* error.cpp in Sources */,
 				ED5372B21DFC2CBE0066FF5A /* sqlite3persistence.cpp in Sources */,
 				ED5372D61DFC9FC60066FF5A /* sqlite3ppext.cpp in Sources */,
 				ED19DD1820F7C3B60012DE7E /* pwm.cpp in Sources */,
 				ED5372A61DFC2CBE0066FF5A /* jsonobject.cpp in Sources */,
+				ED34E40821255A71006F286C /* dispmatrix.cpp in Sources */,
 				ED7108F3210E106700A9B57C /* viewstack.cpp in Sources */,
 				ED5372B01DFC2CBE0066FF5A /* socketcomm.cpp in Sources */,
 				ED19DD0820F793030012DE7E /* lethd_main.cpp in Sources */,
 				ED5372A41DFC2CBE0066FF5A /* iopin.cpp in Sources */,
+				ED34E4022125598B006F286C /* fader.cpp in Sources */,
 				ED5372B11DFC2CBE0066FF5A /* spi.cpp in Sources */,
 				ED5372AD1DFC2CBE0066FF5A /* persistentparams.cpp in Sources */,
 				ED5372A71DFC2CBE0066FF5A /* jsonrpccomm.cpp in Sources */,
@@ -402,6 +431,7 @@
 				ED19DD1720F7C3B60012DE7E /* analogio.cpp in Sources */,
 				ED7108F2210E106700A9B57C /* textview.cpp in Sources */,
 				ED7108F0210E106700A9B57C /* view.cpp in Sources */,
+				ED34E4032125598B006F286C /* feature.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

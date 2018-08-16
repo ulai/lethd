@@ -28,7 +28,8 @@
 #include "lethdapi.hpp"
 #include "fader.hpp"
 #include "neuron.hpp"
-//#include "dispmatrix.hpp"
+#include "dispmatrix.hpp"
+
 // FIXME: factor out
 #include "viewscroller.hpp"
 #include "textview.hpp"

@@ -67,6 +67,14 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "--lethdapiport 11200"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--orientation 6"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "--ledcols 20 --ledrows 10"
             isEnabled = "YES">
          </CommandLineArgument>
@@ -92,6 +100,10 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-l 7"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "-l 6"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
