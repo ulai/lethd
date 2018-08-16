@@ -25,42 +25,110 @@
 #include "p44utils_common.hpp"
 
 #include "jsoncomm.hpp"
-#include "textview.hpp"
-#include "fader.hpp"
-#include "neuron.hpp"
 
 namespace p44 {
 
   typedef boost::function<void (JsonObjectPtr aResponse, ErrorPtr aError)> RequestDoneCB;
   typedef boost::function<void (JsonObjectPtr aData)> InitFeatureCB;
 
-  class LethdApi : public P44Obj
+  class ApiRequest;
+  typedef boost::intrusive_ptr<ApiRequest> ApiRequestPtr;
+
+  class LethdApi;
+  typedef boost::intrusive_ptr<LethdApi> LethdApiPtr;
+
+  class Feature;
+  typedef boost::intrusive_ptr<Feature> FeaturePtr;
+
+
+  class ApiRequest : public P44Obj
   {
-    SocketCommPtr apiServer;
-    JsonCommPtr connection;
-    TextViewPtr message;
-    FaderPtr fader;
-    NeuronPtr neuron;
-    InitFeatureCB initFeature;
+
+    JsonObjectPtr request;
 
   public:
-    LethdApi(TextViewPtr aMessage, FaderPtr aFader, NeuronPtr aNeuron, InitFeatureCB aInitFeature);
-    void start(const char* aApiPort);
+
+    ApiRequest(JsonObjectPtr aRequest) : request(aRequest) {};
+    virtual ~ApiRequest() {};
+
+    /// get the request to process
+    /// @return get the request JSON object
+    JsonObjectPtr getRequest() { return request; }
+
+    /// send response
+    /// @param aResponse JSON response to send
+    virtual void sendResponse(JsonObjectPtr aResponse, ErrorPtr aError) = 0;
+
+  };
+
+
+  class LethdApiRequest : public ApiRequest
+  {
+    typedef ApiRequest inherited;
+    JsonCommPtr connection;
+
+  public:
+
+    LethdApiRequest(JsonObjectPtr aRequest, JsonCommPtr aConnection);
+    virtual ~LethdApiRequest();
+
+    /// send response
+    /// @param aResponse JSON response to send
+    /// @param aError error to report back
+    virtual void sendResponse(JsonObjectPtr aResponse, ErrorPtr aError) override;
+
+  };
+
+
+
+  class LethdApi : public P44Obj
+  {
+    friend class LethdApiRequest;
+
+    SocketCommPtr apiServer;
+    JsonCommPtr connection;
+
+    typedef std::map<string, FeaturePtr> FeatureMap;
+    FeatureMap featureMap;
+
+  public:
+
+    LethdApi();
+    virtual ~LethdApi();
+
+    /// add a feature
+    /// @param aFeature the to add
+    void addFeature(FeaturePtr aFeature);
+
+    /// handle request
+    /// @param aRequest the request to process
+    /// @note usually this is called internally, but method is exposed to allow injecting
+    ///   api requests from other sources (such as Web API)
+    void handleRequest(ApiRequestPtr aRequest);
+
+    void start(const string aApiPort);
     void send(double aValue);
 
   private:
+
     SocketCommPtr apiConnectionHandler(SocketCommPtr aServerSocketComm);
     void apiRequestHandler(JsonCommPtr aConnection, ErrorPtr aError, JsonObjectPtr aRequest);
-    void requestHandled(JsonCommPtr aConnection, JsonObjectPtr aResponse, ErrorPtr aError);
-    void init(JsonObjectPtr aData);
-    void now(JsonObjectPtr aData);
-    void fade(JsonObjectPtr aData);
-    void fire(JsonObjectPtr aData);
-    void setText(JsonObjectPtr aData);
-    ErrorPtr processRequest(JsonObjectPtr aData);
+    ErrorPtr processRequest(ApiRequestPtr aRequest);
+
+
+    ErrorPtr init(ApiRequestPtr aRequest);
+    ErrorPtr now(ApiRequestPtr aRequest);
+
+
+    ErrorPtr fire(ApiRequestPtr aRequest);
+    ErrorPtr setText(ApiRequestPtr aRequest);
+
+    /// send response via main API connection.
+    /// @note: only for LethdApiRequest
+    void sendResponse(JsonObjectPtr aResponse);
+
   };
 
-  typedef boost::intrusive_ptr<LethdApi> LethdApiPtr;
 
   class LethdApiError : public Error
   {

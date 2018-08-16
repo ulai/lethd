@@ -1,7 +1,7 @@
 //
 //  Copyright (c) 2016-2017 plan44.ch / Lukas Zeller, Zurich, Switzerland
 //
-//  Author: Ueli Wahlen <ueli@hotmail.com>
+//  Authors: Ueli Wahlen <ueli@hotmail.com>, Lukas Zeller <luz@plan44.ch>
 //
 //  This file is part of lethd.
 //
@@ -21,7 +21,55 @@
 
 #include "lethdapi.hpp"
 
+#include "feature.hpp"
+
+
 using namespace p44;
+
+
+// MARK: ===== LethdApiRequest
+
+LethdApiRequest::LethdApiRequest(JsonObjectPtr aRequest, JsonCommPtr aConnection) :
+  inherited(aRequest),
+  connection(aConnection)
+{
+}
+
+
+LethdApiRequest::~LethdApiRequest()
+{
+}
+
+
+void LethdApiRequest::sendResponse(JsonObjectPtr aResponse, ErrorPtr aError)
+{
+  if (!Error::isOK(aError)) {
+    aResponse = JsonObject::newObj();
+    aResponse->add("Error", JsonObject::newString(aError->description()));
+  }
+  if (connection) connection->sendMessage(aResponse);
+  LOG(LOG_INFO,"API answer: %s", aResponse->c_strValue());
+}
+
+
+// MARK: ===== LethdApi
+
+
+LethdApi::LethdApi()
+{
+}
+
+
+LethdApi::~LethdApi()
+{
+}
+
+
+void LethdApi::addFeature(FeaturePtr aFeature)
+{
+  featureMap[aFeature->getName()] = aFeature;
+}
+
 
 SocketCommPtr LethdApi::apiConnectionHandler(SocketCommPtr aServerSocketComm)
 {
@@ -33,104 +81,111 @@ SocketCommPtr LethdApi::apiConnectionHandler(SocketCommPtr aServerSocketComm)
   return conn;
 }
 
+
 void LethdApi::apiRequestHandler(JsonCommPtr aConnection, ErrorPtr aError, JsonObjectPtr aRequest)
 {
   if (Error::isOK(aError)) {
     LOG(LOG_INFO,"API request: %s", aRequest->c_strValue());
-    aError = processRequest(aRequest);
+    ApiRequestPtr req = ApiRequestPtr(new LethdApiRequest(aRequest, aConnection));
+    aError = processRequest(req);
   }
-  // return
-  requestHandled(aConnection, JsonObjectPtr(), aError);
+  else {
+    // error from connection level (e.g. JSON syntax)
+    JsonObjectPtr resp = JsonObject::newObj();
+    resp->add("Error", JsonObject::newString(aError->description()));
+    aConnection->sendMessage(resp);
+    LOG(LOG_INFO,"API answer: %s", resp->c_strValue());
+  }
 }
 
-void LethdApi::requestHandled(JsonCommPtr aConnection, JsonObjectPtr aResponse, ErrorPtr aError)
+
+void LethdApi::handleRequest(ApiRequestPtr aRequest)
 {
-  if (!aResponse) {
-    aResponse = JsonObject::newObj(); // empty response
+  ErrorPtr err = processRequest(aRequest);
+  if (err) {
+    // something to send (empty response or error)
+    aRequest->sendResponse(JsonObject::newObj(), err);
   }
-  if (!Error::isOK(aError)) {
-    aResponse->add("Error", JsonObject::newString(aError->description()));
-  }
-  LOG(LOG_INFO,"API answer: %s", aResponse->c_strValue());
-  aConnection->sendMessage(aResponse);
 }
 
-void LethdApi::init(JsonObjectPtr aData)
+
+
+ErrorPtr LethdApi::processRequest(ApiRequestPtr aRequest)
 {
-  initFeature(aData);
+  JsonObjectPtr reqData = aRequest->getRequest();
+  JsonObjectPtr o;
+  // first check global commands
+  if (reqData->get("cmd", o)) {
+    string cmd = o->stringValue();
+    if (cmd=="init") {
+      return init(aRequest);
+    }
+    else if (cmd=="now") {
+      return now(aRequest);
+    }
+  }
+  // must be feature-specific command or property
+  if (!reqData->get("feature", o))
+    return LethdApiError::err("unknown global cmd / missing 'feature' attribute");
+  if (!o->isType(json_type_string)) {
+    return LethdApiError::err("'feature' attribute must be a string");
+  }
+  string featurename = o->stringValue();
+  FeatureMap::iterator f = featureMap.find(featurename);
+  if (f==featureMap.end()) {
+    return LethdApiError::err("unknown feature '%s'", featurename.c_str());
+  }
+  if (!f->second->isInitialized()) {
+    return LethdApiError::err("feature '%s' is not yet initialized", featurename.c_str());
+  }
+  // let feature handle it
+  ErrorPtr err = f->second->processRequest(aRequest);
+  if (!Error::isOK(err)) {
+    err->prefixMessage("Feature '%s' cannot process request: ", featurename.c_str());
+  }
+  return err;
 }
 
-void LethdApi::now(JsonObjectPtr aData)
+
+
+ErrorPtr LethdApi::init(ApiRequestPtr aRequest)
+{
+  bool featureFound = false;
+  ErrorPtr err;
+  for (FeatureMap::iterator f = featureMap.begin(); f!=featureMap.end(); ++f) {
+    JsonObjectPtr initData = aRequest->getRequest()->get(f->first.c_str());
+    if (initData) {
+      featureFound = true;
+      err = f->second->initialize(initData);
+      if (!Error::isOK(err)) {
+        err->prefixMessage("Feature '%s' init failed: ", f->first.c_str());
+        return err;
+      }
+    }
+  }
+  if (!featureFound) {
+    return LethdApiError::err("init does not address any known features");
+  }
+  return Error::ok(); // cause empty response
+}
+
+
+ErrorPtr LethdApi::now(ApiRequestPtr aRequest)
 {
   JsonObjectPtr answer = JsonObject::newObj();
   answer->add("now", JsonObject::newInt64(MainLoop::unixtime()));
-  connection->sendMessage(answer);
+  aRequest->sendResponse(answer, ErrorPtr());
+  return ErrorPtr();
 }
 
-void LethdApi::fade(JsonObjectPtr aData)
-{
-  double from = fader->current();
-  if(aData->get("from")) from = aData->get("from")->doubleValue();
-  double to = aData->get("to")->doubleValue();
-  MLMicroSeconds t = aData->get("t")->int64Value() * MilliSecond;
-  MLMicroSeconds start = MainLoop::now();
-  if(aData->get("start")) MainLoop::unixTimeToMainLoopTime(aData->get("start")->int64Value() * MilliSecond);
-  fader->fade(from, to, t, start);
-}
 
-void LethdApi::fire(JsonObjectPtr aData)
-{
-  neuron->fire();
-}
-
-void LethdApi::setText(JsonObjectPtr aData)
-{
-  string text = aData->get("text")->stringValue();
-  MLMicroSeconds start = MainLoop::now();
-  if(aData->get("start")) MainLoop::unixTimeToMainLoopTime(aData->get("start")->int64Value() * MilliSecond);
-  //message->setText(text, start);
-}
-
-ErrorPtr LethdApi::processRequest(JsonObjectPtr aData)
-{
-  ErrorPtr err;
-
-  if(!aData->get("cmd")) return LethdApiError::err("Misssing cmd attribute");
-  if(!aData->get("cmd")->isType(json_type_string)) return LethdApiError::err("cmd attribute must be a string");
-  string aCmd = aData->get("cmd")->stringValue().c_str();
-
-  typedef boost::function<void (JsonObjectPtr aData)> CmdFunctionCB;
-  static std::map<string, CmdFunctionCB> m;
-
-  m["init"] = boost::bind(&LethdApi::init, this, _1);
-  m["now"] = boost::bind(&LethdApi::now, this, _1);
-  m["fade"] = boost::bind(&LethdApi::fade, this, _1);
-  m["fire"] = boost::bind(&LethdApi::fire, this, _1);
-  m["setText"] = boost::bind(&LethdApi::setText, this, _1);
-
-  if(m.count(aCmd)) {
-    m[aCmd](aData);
-    return err;
-  }
-
-  return LethdApiError::err("Unknown cmd: %s", aCmd.c_str());
-}
-
-LethdApi::LethdApi(TextViewPtr aMessage, FaderPtr aFader, NeuronPtr aNeuron, InitFeatureCB aInitFeature)
-{
-  message = aMessage;
-  fader = aFader;
-  neuron = aNeuron;
-  initFeature = aInitFeature;
-}
-
-void LethdApi::start(const char* aApiPort)
+void LethdApi::start(const string aApiPort)
 {
   apiServer = SocketCommPtr(new SocketComm(MainLoop::currentMainLoop()));
-  apiServer->setConnectionParams(NULL, aApiPort, SOCK_STREAM, AF_INET6);
+  apiServer->setConnectionParams(NULL, aApiPort.c_str(), SOCK_STREAM, AF_INET6);
   apiServer->setAllowNonlocalConnections(true);
   apiServer->startServer(boost::bind(&LethdApi::apiConnectionHandler, this, _1), 3);
-  LOG(LOG_INFO, "LEthDApi listening on %s", aApiPort);
+  LOG(LOG_INFO, "LEthDApi listening on %s", aApiPort.c_str());
 }
 
 void LethdApi::send(double aValue)

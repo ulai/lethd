@@ -67,19 +67,15 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "--jsonapiipv6"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "--lethdapiport 11200"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--orientation 6"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "--ledcols 20 --ledrows 10"
-            isEnabled = "YES">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "--ledchain /tmp/ledchainsim"
+            argument = "--ledchain1 /tmp/ledchainsim"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -91,6 +87,14 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "--neuron 20,250"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--dispmatrix 20,10"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "--button sim.button --redled sim.redled --greenled sim.greenled"
             isEnabled = "YES">
          </CommandLineArgument>
@@ -99,12 +103,12 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "-l 7"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
             argument = "-l 6"
             isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "-l 7"
+            isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>
       <AdditionalOptions>

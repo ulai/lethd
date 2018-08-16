@@ -31,17 +31,78 @@
 
 namespace p44 {
 
-  class DispMatrix : public Feature
+
+  class DispPanel : public P44Obj
   {
-    LEDChainCommPtr ledChain;
+    friend class DispMatrix;
+
+    LEDChainCommPtr chain; ///< the led chain for this panel
+    int offsetX; ///< X offset within entire display
+    int cols; ///< total number of columns (including hidden LEDs)
+    int rows; ///< number of rows
+    int borderRight; ///< number of hidden LEDs at far end
+    int borderLeft; ///< number of hidden LEDs at near (connector) end
+    int orientation; ///< orientation of content
+
+    ViewScrollerPtr dispView;
+    TextViewPtr message;
+
 
   public:
-    DispMatrix(LEDChainCommPtr aledChain);
-    virtual ~DispMatrix();
+
+    DispPanel(const string aChainName, int aOffsetX, int aRows, int aCols, int aBorderLeft, int aBorderRight, int aOrientation);
+    virtual ~DispPanel();
+
+    MLMicroSeconds step();
+
+
+  private:
+
+    void setOffsetX(double aOffsetX);
+    void updateDisplay();
 
   };
+  typedef boost::intrusive_ptr<DispPanel> DispPanelPtr;
 
-  typedef boost::intrusive_ptr<DispMatrix> DispMatrixPtr;
+
+
+  class DispMatrix : public Feature
+  {
+    typedef Feature inherited;
+
+    static const int numChains = 3;
+    string chainNames[numChains];
+    DispPanelPtr panels[numChains];
+    int usedPanels;
+
+    MLTicket stepTicket;
+
+  public:
+
+    DispMatrix(const string aChainName1, const string aChainName2, const string aChainName3);
+    virtual ~DispMatrix();
+
+    /// reset the feature to uninitialized/re-initializable state
+    virtual void reset() override;
+
+    /// initialize the feature
+    /// @param aInitData the init data object specifying feature init details
+    /// @return error if any, NULL if ok
+    virtual ErrorPtr initialize(JsonObjectPtr aInitData) override;
+
+    /// handle request
+    /// @param aRequest the API request to process
+    /// @return NULL to send nothing at return (but possibly later via aRequest->sendResponse),
+    ///   Error::ok() to just send a empty response, or error to report back
+    virtual ErrorPtr processRequest(ApiRequestPtr aRequest) override;
+
+  private:
+
+    void step(MLTimer &aTimer);
+    void initOperation();
+
+
+  };
 
 } // namespace p44
 

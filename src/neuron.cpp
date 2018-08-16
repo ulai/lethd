@@ -20,15 +20,85 @@
 //
 
 #include "neuron.hpp"
+#include "application.hpp"
+#include <boost/algorithm/string.hpp>
 
 using namespace p44;
 
-Neuron::Neuron(LEDChainCommPtr aledChain, NeuronMeasureCB aNeuronMesure, NeuronSpikeCB aNeuronSpike)
+Neuron::Neuron(const string aLedChain1Name, const string aLedChain2Name, AnalogIoPtr aSensor, NeuronSpikeCB aNeuronSpike) :
+  inherited("neuron")
 {
-  ledChain = aledChain;
-  neuronMeasure = aNeuronMesure;
+  ledChainName = aLedChain1Name;
+  sensor = aSensor;
   neuronSpike = aNeuronSpike;
+  // check for commandline-triggered standalone operation
+  string s;
+  if (CmdLineApp::sharedCmdLineApp()->getStringOption("neuron", s)) {
+    initOperation();
+    std::vector<std::string> neuronOptions;
+    boost::split(neuronOptions, s, boost::is_any_of(","), boost::token_compress_on);
+    int movingAverageCount = atoi(neuronOptions[0].c_str());
+    int threshold = atoi(neuronOptions[1].c_str());
+    start(movingAverageCount, threshold);
+  }
 }
+
+
+// MARK: ==== neuron API
+
+
+ErrorPtr Neuron::initialize(JsonObjectPtr aInitData)
+{
+  initOperation();
+  JsonObjectPtr o;
+  if (!aInitData->get("movingAverageCount", o)) {
+    return LethdApiError::err("missing 'movingAverageCount'");
+  }
+  double movingAverageCount = o->doubleValue();
+  if (!aInitData->get("threshold", o)) {
+    return LethdApiError::err("missing 'threshold'");
+  }
+  double threshold = o->doubleValue();
+  // start
+  start(movingAverageCount, threshold);
+  setInitialized();
+  return Error::ok();
+}
+
+
+ErrorPtr Neuron::processRequest(ApiRequestPtr aRequest)
+{
+  JsonObjectPtr o = aRequest->getRequest()->get("cmd");
+  if (!o) {
+    return LethdApiError::err("missing 'cmd'");
+  }
+  string cmd = o->stringValue();
+  if (cmd=="fire") {
+    return fire(aRequest);
+  }
+  return LethdApiError::err("unknown cmd '%s'", cmd.c_str());
+}
+
+
+ErrorPtr Neuron::fire(ApiRequestPtr aRequest)
+{
+  fire();
+  return Error::ok();
+}
+
+
+// MARK: ==== neuron operation
+
+
+void Neuron::initOperation()
+{
+  LOG(LOG_INFO, "initializing neuron");
+  ledChain = LEDChainCommPtr(new LEDChainComm(LEDChainComm::ledtype_ws281x, ledChainName, 100));
+  ledChain->begin();
+  ledChain->show();
+  setInitialized();
+}
+
 
 void Neuron::start(double aMovingAverageCount, double aThreshold)
 {
@@ -48,7 +118,7 @@ void Neuron::fire(double aValue)
 
 void Neuron::measure(MLTimer &aTimer)
 {
-  double value = neuronMeasure();
+  double value = sensor->value();
   avg = (avg * (movingAverageCount - 1) + value) / movingAverageCount;
   if(avg > threshold) fire(avg);
   ticketMeasure.executeOnce(boost::bind(&Neuron::measure, this, _1), 10 * MilliSecond);

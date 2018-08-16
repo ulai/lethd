@@ -26,17 +26,11 @@
 #include "ledchaincomm.hpp"
 
 #include "lethdapi.hpp"
+
 #include "fader.hpp"
 #include "neuron.hpp"
 #include "dispmatrix.hpp"
 
-// FIXME: factor out
-#include "viewscroller.hpp"
-#include "textview.hpp"
-
-#include <dirent.h>
-
-#include <boost/algorithm/string.hpp>
 
 using namespace p44;
 
@@ -48,12 +42,33 @@ using namespace p44;
 #define MKSTR(s) _MKSTR(s)
 #define _MKSTR(s) #s
 
-#define LED_MODULE_COLS 74
-#define LED_MODULE_ROWS 7
-#define LED_MODULE_BORDER_LEFT 1
-#define LED_MODULE_BORDER_RIGHT 1
 
 typedef boost::function<void (JsonObjectPtr aResponse, ErrorPtr aError)> RequestDoneCB;
+
+
+class JsonWebAPIRequest : public ApiRequest
+{
+  typedef ApiRequest inherited;
+
+  RequestDoneCB requestDoneCB;
+
+public:
+
+  JsonWebAPIRequest(JsonObjectPtr aRequest, RequestDoneCB aRequestDoneCB) :
+    inherited(aRequest),
+    requestDoneCB(aRequestDoneCB)
+  {
+  };
+
+
+  void sendResponse(JsonObjectPtr aResponse, ErrorPtr aError) override
+  {
+    if (requestDoneCB) requestDoneCB(aResponse, aError);
+  }
+
+};
+
+
 
 class LEthD : public CmdLineApp
 {
@@ -71,38 +86,23 @@ class LEthD : public CmdLineApp
   AnalogIoPtr sensor1;
   AnalogIoPtr pwmDimmer;
 
-  // LED chain
-  LEDChainCommPtr ledChain;
-  int ledRows;
-  int ledCols;
-  int ledBorderRight;
-  int ledBorderLeft;
-  int ledOrientation;
+//  ViewScrollerPtr dispView;
+//  TextViewPtr message;
+//  MLMicroSeconds starttime;
+//  // FIXME: factor out
+//  int numScrollSteps;
+//  double scrollStepX;
+//  double scrollStepY;
+//  MLMicroSeconds scrollStepInterval;
 
-  ViewScrollerPtr dispView;
-  TextViewPtr message;
-
-  MLMicroSeconds starttime;
-
-  MLTicket sampleTicket;
+//  MLTicket sampleTicket;
 
   LethdApiPtr lethdApi;
-
-  FaderPtr fader;
-  NeuronPtr neuron;
-  //DispMatrixPtr dispMatrix;
-
-  // FIXME: factor out
-  int numScrollSteps;
-  double scrollStepX;
-  double scrollStepY;
-  MLMicroSeconds scrollStepInterval;
 
 
 public:
 
-  LEthD() :
-    starttime(MainLoop::now())
+  LEthD()
   {
   }
 
@@ -114,17 +114,16 @@ public:
       { 0  , "pwmdimmer",      true,  "pinspec;PWM dimmer output pin" },
       { 0  , "sensor0",        true,  "pinspec;analog sensor0 input to use" },
       { 0  , "sensor1",        true,  "pinspec;analog sensor1 input to use" },
-      { 0  , "ledchain",       true,  "devicepath;ledchain device to use" },
-      { 0  , "ledrows",        true,  "rows;number of LED rows (default=" MKSTR(LED_MODULE_ROWS)  ")" },
-      { 0  , "ledcols",        true,  "columns;total number of LED columns (default=" MKSTR(LED_MODULE_COLS) ")" },
-      { 0  , "orientation",    true,  "orientation;text view orientation (default=0=normal)" },
-      { 0  , "borderleft",     true,  "columns;number of hidden columns on the left (default=" MKSTR(LED_MODULE_BORDER_LEFT) ")" },
-      { 0  , "borderright",    true,  "columns;number of hidden columns on the right (default=" MKSTR(LED_MODULE_BORDER_RIGHT) ")" },
+      { 0  , "ledchain1",      true,  "devicepath;ledchain1 device to use" },
+      { 0  , "ledchain2",      true,  "devicepath;ledchain2 device to use" },
+      { 0  , "ledchain3",      true,  "devicepath;ledchain3 device to use" },
       { 0  , "lethdapiport",   true,  "port;server port number for lETHd JSON API (default=none)" },
       { 0  , "neuron",         true,  "movingAverageCount,threshold;start neuron" },
       { 0  , "light",          false, "start light" },
+      { 0  , "dispmatrix",     true,  "numcols;start display matrix" },
       { 0  , "jsonapiport",    true,  "port;server port number for JSON API (default=none)" },
       { 0  , "jsonapinonlocal",false, "allow JSON API from non-local clients" },
+      { 0  , "jsonapiipv6",    false, "JSON API on IPv6" },
       { 0  , "button",         true,  "input pinspec; device button" },
       { 0  , "greenled",       true,  "output pinspec; green device LED" },
       { 0  , "redled",         true,  "output pinspec; red device LED" },
@@ -170,51 +169,38 @@ public:
       sensor1 =  AnalogIoPtr(new AnalogIo(getOption("sensor1","missing"), false, 0));
       // create PWM output
       pwmDimmer = AnalogIoPtr(new AnalogIo(getOption("pwmdimmer","missing"), true, 0)); // off to begin with
-      // create LED chain output
-      string ledChainDev;
-      if (getStringOption("ledchain", ledChainDev)) {
-        // get geometry
-        ledRows = LED_MODULE_ROWS;
-        ledCols = LED_MODULE_COLS;
-        ledBorderLeft = LED_MODULE_BORDER_LEFT;
-        ledBorderRight = LED_MODULE_BORDER_RIGHT;
-        ledOrientation = View::right;
-        getIntOption("ledrows", ledRows);
-        getIntOption("ledcols", ledCols);
-        getIntOption("borderleft", ledBorderLeft);
-        getIntOption("borderright", ledBorderRight);
-        getIntOption("orientation", ledOrientation);
-        // create chain driver
-        ledChain = LEDChainCommPtr(new LEDChainComm(LEDChainComm::ledtype_ws281x, ledChainDev, ledRows*ledCols, ledCols, false, true));
-        ledChain->begin();
-      }
-      // - create and start API server and wait for things to happen
+
+      // create API
+      lethdApi = LethdApiPtr(new LethdApi);
+      // add features
+      // - fader
+      lethdApi->addFeature(FeaturePtr(new Fader(
+        pwmDimmer
+      )));
+      // - neuron
+      lethdApi->addFeature(FeaturePtr(new Neuron(
+        getOption("ledchain1","/dev/null"),
+        getOption("ledchain2","/dev/null"),
+        sensor0,
+        boost::bind(&LEthD::neuronSpike, this, _1)
+      )));
+      // - dispmatrix
+      lethdApi->addFeature(FeaturePtr(new DispMatrix(
+        getOption("ledchain1","/dev/null"),
+        getOption("ledchain2","/dev/null"),
+        getOption("ledchain3","/dev/null")
+      )));
+      // start lethd API server for leths server
       string apiport;
+      if (getStringOption("lethdapiport", apiport)) {
+        lethdApi->start(apiport);
+      }
+      // - create and start mg44 style API server for web interface
       if (getStringOption("jsonapiport", apiport)) {
         apiServer = SocketCommPtr(new SocketComm(MainLoop::currentMainLoop()));
-        apiServer->setConnectionParams(NULL, apiport.c_str(), SOCK_STREAM, AF_INET6);
+        apiServer->setConnectionParams(NULL, apiport.c_str(), SOCK_STREAM, getOption("jsonapiipv6") ? AF_INET6 : AF_INET);
         apiServer->setAllowNonlocalConnections(getOption("jsonapinonlocal"));
         apiServer->startServer(boost::bind(&LEthD::apiConnectionHandler, this, _1), 3);
-      }
-
-      // - create and start API server for lethd server
-      if (getStringOption("lethdapiport", apiport)) {
-        fader = FaderPtr(new Fader(boost::bind(&LEthD::fadeUpdate, this, _1)));
-        neuron = NeuronPtr(new Neuron(ledChain, boost::bind(&LEthD::neuronMeasure, this), boost::bind(&LEthD::neuronSpike, this, _1)));
-        lethdApi = LethdApiPtr(new LethdApi(message, fader, neuron, boost::bind(&LEthD::initFeature, this, _1)));
-        lethdApi->start(apiport.c_str());
-        string s;
-        if (getStringOption("neuron", s)) {
-          std::vector<std::string> neuronOptions;
-          boost::split(neuronOptions, s, boost::is_any_of(","), boost::token_compress_on);
-          int movingAverageCount = atoi(neuronOptions[0].c_str());
-          int threshold = atoi(neuronOptions[1].c_str());
-          neuron->initialize();
-          neuron->start(movingAverageCount, threshold);
-        }
-        if (getOption("light")) {
-          fader->initialize();
-        }
       }
     } // if !terminated
     // app now ready to run (or cleanup when already terminated)
@@ -225,104 +211,16 @@ public:
   virtual void initialize()
   {
     LOG(LOG_NOTICE, "lethd initialize()");
-    if (ledChain) {
-      // init scroll params
-      numScrollSteps = -1; // endless
-      scrollStepX = 0.25;
-      scrollStepY = 0;
-      scrollStepInterval = 20*MilliSecond;
-      // create views
-      message = TextViewPtr(new TextView);
-      message->setFrame(0, 0, 1500, 7);
-      message->setBackGroundColor(transparent);
-      message->setWrapMode(View::wrapX);
-      message->setText("Hello World +++ ");
-      dispView = ViewScrollerPtr(new ViewScroller);
-      dispView->setFrame(ledBorderLeft, 0, ledCols-ledBorderLeft-ledBorderRight, ledRows);
-      dispView->setFullFrameContent();
-      dispView->setOrientation(ledOrientation);
-      dispView->setBackGroundColor(black); // not transparent!
-      dispView->setScrolledView(message);
-      // set up auto-scroll
-      dispView->startScroll(scrollStepX, scrollStepY, scrollStepInterval, numScrollSteps);
-      // start stepping
-      MainLoop::currentMainLoop().executeNow(boost::bind(&LEthD::step, this, _1));
-    }
 
-    MainLoop::currentMainLoop().executeNow(boost::bind(&LEthD::features, this, _1));
+
   }
 
-
-  void initFeature(JsonObjectPtr aData)
-  {
-    ErrorPtr err;
-    JsonObjectPtr o;
-    LOG(LOG_INFO, "initFeature: %s", aData->c_strValue());
-
-    if(aData->get("text", o)) {
-      // TODO init text, ledchain etc.
-    } else if(aData->get("light", o)) {
-      LOG(LOG_INFO, "initialize fader");
-      fader->initialize();
-    } else if(aData->get("neuron", o)) {
-      LOG(LOG_INFO, "initialize neuron");
-      neuron->initialize();
-      neuron->start(o->get("movingAverageCount")->doubleValue(), o->get("threshold")->doubleValue());
-    }
-  }
-
-  void features(MLTimer &aTimer) {
-    MainLoop::currentMainLoop().retriggerTimer(aTimer, 10*MilliSecond);
-  }
-
-  void fadeUpdate(double aValue) {
-    LOG(LOG_INFO, "fadeUpdate %f", aValue);
-    if (pwmDimmer) pwmDimmer->setValue(aValue);
-  }
-
-  double neuronMeasure() {
-    double value = -1;
-    if (sensor0) value = sensor0->value();
-    return value;
-  }
 
   void neuronSpike(double aValue) {
     lethdApi->send(aValue);
   }
 
-  #define MAX_STEP_INTERVAL (20*MilliSecond)
-
-  void step(MLTimer &aTimer)
-  {
-    MLMicroSeconds nextCall = Infinite;
-    if (dispView) {
-      do {
-        nextCall = dispView->step();
-      } while (nextCall==0);
-      updateDisplay();
-    }
-    MLMicroSeconds now = MainLoop::now();
-    if (nextCall<0 || nextCall-now>MAX_STEP_INTERVAL) {
-      nextCall = now+MAX_STEP_INTERVAL;
-    }
-    MainLoop::currentMainLoop().retriggerTimer(aTimer, nextCall, 0, MainLoop::absolute);
-  }
-
-  void updateDisplay()
-  {
-    if (dispView && dispView->isDirty()) {
-      for (int x=0; x<ledCols; x++) {
-        for (int y=0; y<ledRows; y++) {
-          PixelColor p = dispView->colorAt(x, y);
-          PixelColor dp = dimmedPixel(p, p.a);
-          ledChain->setColorXY(x, y, dp.r, dp.g, dp.b);
-        }
-      }
-      ledChain->show();
-      dispView->updated();
-    }
-  }
-
+  
 
   // MARK: ==== Button
 
@@ -351,7 +249,7 @@ public:
   {
     // Decode mg44-style request (HTTP wrapped in JSON)
     if (Error::isOK(aError)) {
-      LOG(LOG_INFO,"API request: %s", aRequest->c_strValue());
+      LOG(LOG_INFO,"mg44 API request: %s", aRequest->c_strValue());
       JsonObjectPtr o;
       o = aRequest->get("method");
       if (o) {
@@ -399,12 +297,12 @@ public:
           return;
         }
         // request cannot be processed, return error
-        LOG(LOG_ERR,"Invalid JSON request");
         aError = WebError::webErr(404, "No handler found for request to %s", uri.c_str());
+        LOG(LOG_ERR,"mg44 API: %s", aError->description().c_str());
       }
       else {
-        LOG(LOG_ERR,"Invalid JSON request");
         aError = WebError::webErr(415, "Invalid JSON request format");
+        LOG(LOG_ERR,"mg44 API: %s", aError->description().c_str());
       }
     }
     // return error
@@ -420,7 +318,7 @@ public:
     if (!Error::isOK(aError)) {
       aResponse->add("Error", JsonObject::newString(aError->description()));
     }
-    LOG(LOG_INFO,"API answer: %s", aResponse->c_strValue());
+    LOG(LOG_INFO,"mg44 API answer: %s", aResponse->c_strValue());
     aConnection->sendMessage(aResponse);
     aConnection->closeAfterSend();
   }
@@ -430,127 +328,14 @@ public:
   {
     ErrorPtr err;
     JsonObjectPtr o;
-    if (aUri=="brightness") {
-      if (aIsAction) {
-        // set
-        if (message && aData->get("text", o)) {
-          // text brightness
-          dispView->setAlpha(o->doubleValue()/100*255);
-        }
-        if (pwmDimmer && aData->get("light", o)) {
-          // light brightness
-          pwmDimmer->setValue(o->doubleValue());
-        }
-      }
-      // get
-      JsonObjectPtr answer = JsonObject::newObj();
-      if (message) answer->add("text", JsonObject::newInt32((double)(message->getAlpha())/255.0*100));
-      if (pwmDimmer) answer->add("light", JsonObject::newDouble(pwmDimmer->value()));
-      aRequestDoneCB(answer, ErrorPtr());
-      return true;
-    }
-    else if (aUri=="text") {
-      if (aIsAction) {
-        bool doneSomething = false;
-        if (aData->get("message", o)) {
-          if (message) message->setText(o->stringValue());
-          doneSomething = true;
-        }
-        if (aData->get("scrolloffsetx", o)) {
-          if (dispView) dispView->setOffsetX(o->doubleValue());
-          doneSomething = true;
-        }
-        if (aData->get("scrolloffsety", o)) {
-          if (dispView) dispView->setOffsetY(o->doubleValue());
-          doneSomething = true;
-        }
-        if (aData->get("scrollstepx", o)) {
-          scrollStepX = o->doubleValue();
-          if (dispView) dispView->startScroll(scrollStepX, scrollStepY, scrollStepInterval, numScrollSteps);
-          doneSomething = true;
-        }
-        if (aData->get("scrollstepy", o)) {
-          scrollStepY = o->doubleValue();
-          if (dispView) dispView->startScroll(scrollStepX, scrollStepY, scrollStepInterval, numScrollSteps);
-          doneSomething = true;
-        }
-        if (aData->get("scrollsteptime", o)) {
-          scrollStepInterval = o->doubleValue()*MilliSecond;
-          if (dispView) dispView->startScroll(scrollStepX, scrollStepY, scrollStepInterval, numScrollSteps);
-          doneSomething = true;
-        }
-        if (aData->get("scrollsteps", o)) {
-          int s = o->int32Value();
-          if (dispView) {
-            if (s==0) {
-              dispView->stopScroll();
-            }
-            else {
-              numScrollSteps = s;
-              dispView->startScroll(scrollStepX, scrollStepY, scrollStepInterval, numScrollSteps);
-            }
-          }
-          doneSomething = true;
-        }
-        if (aData->get("scrollstart", o)) {
-          MLMicroSeconds start = MainLoop::unixTimeToMainLoopTime(o->int64Value());
-          if (dispView) dispView->startScroll(scrollStepX, scrollStepY, scrollStepInterval, numScrollSteps, start);
-          doneSomething = true;
-        }
-        if (aData->get("color", o)) {
-          PixelColor p = webColorToPixel(o->stringValue());
-          if (p.a==255) p.a = message->getAlpha();
-          message->setTextColor(p);
-          doneSomething = true;
-        }
-        if (aData->get("backgroundcolor", o)) {
-          PixelColor p = webColorToPixel(o->stringValue());
-          if (p.a==255) p.a = message->getAlpha();
-          message->setBackGroundColor(p);
-          doneSomething = true;
-        }
-        if (aData->get("spacing", o)) {
-          message->setTextSpacing(o->int32Value());
-          doneSomething = true;
-        }
-        if (aData->get("orientation", o)) {
-          ledOrientation = o->int32Value();
-          dispView->setOrientation(ledOrientation);
-          doneSomething = true;
-        }
-        if (aData->get("startx", o)) {
-          // start x offset
-          dispView->setContentOffset(-o->int32Value(), 0);
-          doneSomething = true;
-        }
-      }
-      // get
-      JsonObjectPtr answer = JsonObject::newObj();
-      if (message) {
-        answer->add("text", JsonObject::newString(message->getText()));
-        answer->add("color", JsonObject::newString(pixelToWebColor(message->getTextColor())));
-        answer->add("spacing", JsonObject::newInt32(message->getTextSpacing()));
-        answer->add("backgroundcolor", JsonObject::newString(pixelToWebColor(message->getBackGroundColor())));
-      }
-      if (dispView) {
-        answer->add("scrolloffsetx", JsonObject::newDouble(dispView->getOffsetX()));
-        answer->add("scrolloffsety", JsonObject::newDouble(dispView->getOffsetY()));
-        answer->add("scrollstepx", JsonObject::newDouble(dispView->getStepX()));
-        answer->add("scrollstepy", JsonObject::newDouble(dispView->getStepY()));
-        answer->add("scrollsteptime", JsonObject::newDouble(dispView->getScrollStepInterval()/MilliSecond));
-        answer->add("unixtime", JsonObject::newInt64(MainLoop::unixtime()));
-      }
-      aRequestDoneCB(answer, ErrorPtr());
-      return true;
-    }
-    else if (aUri=="inputs") {
+    if (aUri=="lethd") {
+      // lethd API wrapper
       if (!aIsAction) {
-        JsonObjectPtr answer = JsonObject::newObj();
-        if (sensor0) answer->add("sensor0", JsonObject::newInt32(sensor0->value()));
-        if (sensor1) answer->add("sensor1", JsonObject::newInt32(sensor1->value()));
-        aRequestDoneCB(answer, ErrorPtr());
-        return true;
+        aRequestDoneCB(JsonObjectPtr(), WebError::webErr(415, "lethd API calls must be action-type (e.g. POST)"));
       }
+      ApiRequestPtr req = ApiRequestPtr(new JsonWebAPIRequest(aData, aRequestDoneCB));
+      lethdApi->handleRequest(req);
+      return true;
     }
     else if (aUri=="log") {
       if (aIsAction) {
@@ -563,19 +348,6 @@ public:
     }
     return false;
   }
-
-
-  void actionDone(RequestDoneCB aRequestDoneCB)
-  {
-    aRequestDoneCB(JsonObjectPtr(), ErrorPtr());
-  }
-
-
-  void actionStatus(RequestDoneCB aRequestDoneCB, ErrorPtr aError = ErrorPtr())
-  {
-    aRequestDoneCB(JsonObjectPtr(), aError);
-  }
-
 
 
   ErrorPtr processUpload(string aUri, JsonObjectPtr aData, const string aUploadedFile)
@@ -598,8 +370,6 @@ public:
     }
     return err;
   }
-
-
 
 };
 

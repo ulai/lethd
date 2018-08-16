@@ -24,21 +24,45 @@
 
 #include "p44utils_common.hpp"
 
+#include "lethdapi.hpp"
+
 namespace p44 {
 
   class Feature : public P44Obj
   {
-    bool initialized = false;
+
+    bool initialized;
+    string name;
 
   public:
-    Feature();
-    void initialize();
-    bool isInitialized();
 
-  private:
+    Feature(const string aName);
+
+    /// initialize the feature
+    /// @param aInitData the init data object specifying feature init details
+    /// @return error if any, NULL if ok
+    virtual ErrorPtr initialize(JsonObjectPtr aInitData) = 0;
+
+    /// reset the feature to uninitialized/re-initializable state
+    virtual void reset();
+
+    /// @return the name of the feature
+    string getName() const { return name; }
+
+    /// @return true if feature is initialized
+    bool isInitialized() const;
+
+    /// handle request
+    /// @param aRequest the API request to process
+    /// @return NULL to send nothing at return (but possibly later via aRequest->sendResponse),
+    ///   Error::ok() to just send a empty response, or error to report back
+    virtual ErrorPtr processRequest(ApiRequestPtr aRequest);
+
+  protected:
+
+    void setInitialized() { initialized = true; }
 
   };
-
   typedef boost::intrusive_ptr<Feature> FeaturePtr;
 
 } // namespace p44

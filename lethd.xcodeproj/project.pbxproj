@@ -228,12 +228,12 @@
 				ED34E3FA2125598A006F286C /* fader.hpp */,
 				ED34E3FC2125598B006F286C /* feature.cpp */,
 				ED34E4002125598B006F286C /* feature.hpp */,
-				ED34E4012125598B006F286C /* lethdapi.cpp */,
-				ED34E3FD2125598B006F286C /* lethdapi.hpp */,
 				ED34E3FE2125598B006F286C /* neuron.cpp */,
 				ED34E3FF2125598B006F286C /* neuron.hpp */,
 				ED34E40621255A70006F286C /* dispmatrix.cpp */,
 				ED34E40721255A71006F286C /* dispmatrix.hpp */,
+				ED34E4012125598B006F286C /* lethdapi.cpp */,
+				ED34E3FD2125598B006F286C /* lethdapi.hpp */,
 				ED19DD0720F793030012DE7E /* lethd_main.cpp */,
 			);
 			path = src;

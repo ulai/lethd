@@ -20,13 +20,73 @@
 //
 
 #include "fader.hpp"
+#include "application.hpp"
 
 using namespace p44;
 
-Fader::Fader(FaderUpdateCB aFaderUpdate)
+Fader::Fader(AnalogIoPtr aPwmDimmer) :
+  inherited("light"),
+  pwmDimmer(aPwmDimmer)
 {
-  faderUpdate = aFaderUpdate;
+  // check for commandline-triggered standalone operation
+  if (CmdLineApp::sharedCmdLineApp()->getOption("light")) {
+    setInitialized();
+  }
 }
+
+// MARK: ==== fader API
+
+ErrorPtr Fader::initialize(JsonObjectPtr aInitData)
+{
+  LOG(LOG_INFO, "initializing fader");
+  initOperation();
+  return Error::ok();
+}
+
+
+ErrorPtr Fader::processRequest(ApiRequestPtr aRequest)
+{
+  JsonObjectPtr o = aRequest->getRequest()->get("cmd");
+  if (!o) {
+    return LethdApiError::err("missing 'cmd'");
+  }
+  string cmd = o->stringValue();
+  if (cmd=="fade") {
+    return fade(aRequest);
+  }
+  if (cmd=="status") {
+    JsonObjectPtr answer = JsonObject::newObj();
+    answer->add("brightness", JsonObject::newDouble(current()));
+    aRequest->sendResponse(answer, ErrorPtr());
+    return ErrorPtr();
+  }
+  return LethdApiError::err("unknown cmd '%s'", cmd.c_str());
+}
+
+
+ErrorPtr Fader::fade(ApiRequestPtr aRequest)
+{
+  JsonObjectPtr data = aRequest->getRequest();
+  double from = current();
+  if(data->get("from")) from = data->get("from")->doubleValue();
+  double to = data->get("to")->doubleValue();
+  MLMicroSeconds t = data->get("t")->int64Value() * MilliSecond;
+  MLMicroSeconds start = MainLoop::now();
+  if(data->get("start")) MainLoop::unixTimeToMainLoopTime(data->get("start")->int64Value() * MilliSecond);
+  fade(from, to, t, start);
+  return Error::ok();
+}
+
+
+// MARK: ==== fader operation
+
+
+void Fader::initOperation()
+{
+  LOG(LOG_INFO, "initializing fader");
+  setInitialized();
+}
+
 
 void Fader::fade(double aFrom, double aTo, MLMicroSeconds aFadeTime, MLMicroSeconds aStartTime)
 {
@@ -46,7 +106,8 @@ void Fader::update(MLTimer &aTimer)
     done = true;
   }
   currentValue = newValue;
-  faderUpdate(brightnessToPWM(currentValue));
+  LOG(LOG_DEBUG, "New fader value = %.1f", currentValue);
+  pwmDimmer->setValue(brightnessToPWM(currentValue));
   if(!done) MainLoop::currentMainLoop().retriggerTimer(aTimer, dt);
 }
 

@@ -22,6 +22,8 @@
 #ifndef __lethd_fader_hpp__
 #define __lethd_fader_hpp__
 
+#include "analogio.hpp"
+
 #include "feature.hpp"
 #include <math.h>
 
@@ -31,7 +33,9 @@ namespace p44 {
 
   class Fader : public Feature
   {
-    FaderUpdateCB faderUpdate;
+    typedef Feature inherited;
+
+    AnalogIoPtr pwmDimmer;
     double currentValue = 0;
     const MLMicroSeconds dt = 20 * MilliSecond;
     double to;
@@ -39,11 +43,27 @@ namespace p44 {
     MLTicket ticket;
 
   public:
-    Fader(FaderUpdateCB aFaderUpdate);
+
+    Fader(AnalogIoPtr aPwmDimmer);
+
     void fade(double aFrom, double aTo, MLMicroSeconds aFadeTime, MLMicroSeconds aStartTime);
     double current();
 
+    /// initialize the feature
+    /// @param aInitData the init data object specifying feature init details
+    /// @return error if any, NULL if ok
+    virtual ErrorPtr initialize(JsonObjectPtr aInitData) override;
+
+    /// handle request
+    /// @param aRequest the API request to process
+    /// @return NULL to send nothing at return (but possibly later via aRequest->sendResponse),
+    ///   Error::ok() to just send a empty response, or error to report back
+    virtual ErrorPtr processRequest(ApiRequestPtr aRequest) override;
+
   private:
+
+    void initOperation();
+
     // PWM    = PWM value
     // maxPWM = max PWM value
     // B      = brightness
@@ -58,9 +78,10 @@ namespace p44 {
     //
     double brightnessToPWM(double aBrightness);
     void update(MLTimer &aTimer);
-  };
 
-  typedef boost::intrusive_ptr<Fader> FaderPtr;
+    ErrorPtr fade(ApiRequestPtr aRequest);
+
+  };
 
 } // namespace p44
 

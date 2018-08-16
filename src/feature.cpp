@@ -23,17 +23,26 @@
 
 using namespace p44;
 
-Feature::Feature()
+Feature::Feature(const string aName) :
+  name(aName),
+  initialized(false)
 {
-
 }
 
-void Feature::initialize()
-{
-  initialized = true;
-}
 
-bool Feature::isInitialized()
+bool Feature::isInitialized() const
 {
   return initialized;
+}
+
+
+ErrorPtr Feature::processRequest(ApiRequestPtr aRequest)
+{
+  return LethdApiError::err("Feature '%s' cannot understand this request", getName().c_str());
+}
+
+
+void Feature::reset()
+{
+  initialized = false;
 }

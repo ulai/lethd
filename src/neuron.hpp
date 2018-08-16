@@ -22,18 +22,23 @@
 #ifndef __lethd_neuron_hpp__
 #define __lethd_neuron_hpp__
 
-#include "feature.hpp"
+#include "analogio.hpp"
 #include "ledchaincomm.hpp"
+
+#include "feature.hpp"
 
 namespace p44 {
 
-  typedef boost::function<double ()> NeuronMeasureCB;
   typedef boost::function<void (double)> NeuronSpikeCB;
 
   class Neuron : public Feature
   {
+    typedef Feature inherited;
+
+    string ledChainName;
     LEDChainCommPtr ledChain;
-    NeuronMeasureCB neuronMeasure;
+    AnalogIoPtr sensor;
+
     NeuronSpikeCB neuronSpike;
 
     double movingAverageCount = 20;
@@ -52,18 +57,32 @@ namespace p44 {
     int pos = 0;
 
   public:
-    Neuron(LEDChainCommPtr aledChain, NeuronMeasureCB neuronMeasure, NeuronSpikeCB neuronSpike);
+
+    Neuron(const string aLedChain1Name, const string aLedChain2Name, AnalogIoPtr aSensor, NeuronSpikeCB aNeuronSpike);
+
     void start(double aMovingAverageCount, double aThreshold);
     void fire(double aValue = 0);
 
+    /// initialize the feature
+    /// @param aInitData the init data object specifying feature init details
+    /// @return error if any, NULL if ok
+    virtual ErrorPtr initialize(JsonObjectPtr aInitData) override;
+
+    /// handle request
+    /// @param aRequest the API request to process
+    /// @return NULL to send nothing at return (but possibly later via aRequest->sendResponse),
+    ///   Error::ok() to just send a empty response, or error to report back
+    virtual ErrorPtr processRequest(ApiRequestPtr aRequest) override;
+
   private:
+    void initOperation();
     void measure(MLTimer &aTimer);
     void animateAxon(MLTimer &aTimer);
     void animateBody(MLTimer &aTimer);
 
-  };
+    ErrorPtr fire(ApiRequestPtr aRequest);
 
-  typedef boost::intrusive_ptr<Neuron> NeuronPtr;
+  };
 
 } // namespace p44
 
