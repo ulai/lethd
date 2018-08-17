@@ -35,24 +35,27 @@ namespace p44 {
   {
     typedef Feature inherited;
 
-    string ledChainName;
-    LEDChainCommPtr ledChain;
+    string ledChain1Name;
+    LEDChainCommPtr ledChain1;
+    string ledChain2Name;
+    LEDChainCommPtr ledChain2;
     AnalogIoPtr sensor;
 
     NeuronSpikeCB neuronSpike;
 
     double movingAverageCount = 20;
     double threshold = 250;
+    int numAxonLeds = 70;
+    int numBodyLeds = 100;
     double avg = 0;
 
-    int numAxonLeds = 100;
-    int numBodyLeds = 100;
 
     enum AxonState { AxonIdle, AxonFiring };
     AxonState axonState = AxonIdle;
 
     MLTicket ticketMeasure;
     MLTicket ticketAnimateAxon;
+    MLTicket ticketAnimateBody;
 
     int pos = 0;
 
@@ -60,7 +63,7 @@ namespace p44 {
 
     Neuron(const string aLedChain1Name, const string aLedChain2Name, AnalogIoPtr aSensor, NeuronSpikeCB aNeuronSpike);
 
-    void start(double aMovingAverageCount, double aThreshold);
+    void start(double aMovingAverageCount, double aThreshold, int aNumAxonLeds, int aNumBodyLeds);
     void fire(double aValue = 0);
 
     /// initialize the feature

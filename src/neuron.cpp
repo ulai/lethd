@@ -28,7 +28,8 @@ using namespace p44;
 Neuron::Neuron(const string aLedChain1Name, const string aLedChain2Name, AnalogIoPtr aSensor, NeuronSpikeCB aNeuronSpike) :
   inherited("neuron")
 {
-  ledChainName = aLedChain1Name;
+  ledChain1Name = aLedChain1Name;
+  ledChain2Name = aLedChain2Name;
   sensor = aSensor;
   neuronSpike = aNeuronSpike;
   // check for commandline-triggered standalone operation
@@ -39,7 +40,9 @@ Neuron::Neuron(const string aLedChain1Name, const string aLedChain2Name, AnalogI
     boost::split(neuronOptions, s, boost::is_any_of(","), boost::token_compress_on);
     int movingAverageCount = atoi(neuronOptions[0].c_str());
     int threshold = atoi(neuronOptions[1].c_str());
-    start(movingAverageCount, threshold);
+    int numAxonLeds = atoi(neuronOptions[2].c_str());
+    int numBodyLeds = atoi(neuronOptions[3].c_str());
+    start(movingAverageCount, threshold, numAxonLeds, numBodyLeds);
   }
 }
 
@@ -59,8 +62,16 @@ ErrorPtr Neuron::initialize(JsonObjectPtr aInitData)
     return LethdApiError::err("missing 'threshold'");
   }
   double threshold = o->doubleValue();
+  if (!aInitData->get("numAxonLeds", o, true)) {
+    return LethdApiError::err("missing 'numAxonLeds'");
+  }
+  double numAxonLeds = o->int32Value();
+  if (!aInitData->get("numBodyLeds", o, true)) {
+    return LethdApiError::err("missing 'numBodyLeds'");
+  }
+  double numBodyLeds = o->int32Value();
   // start
-  start(movingAverageCount, threshold);
+  start(movingAverageCount, threshold, numAxonLeds, numBodyLeds);
   setInitialized();
   return Error::ok();
 }
@@ -92,18 +103,23 @@ ErrorPtr Neuron::fire(ApiRequestPtr aRequest)
 
 void Neuron::initOperation()
 {
-  LOG(LOG_NOTICE, "initializing neuron");
-  ledChain = LEDChainCommPtr(new LEDChainComm(LEDChainComm::ledtype_ws281x, ledChainName, 100));
-  ledChain->begin();
-  ledChain->show();
+  LOG(LOG_INFO, "initializing neuron");
+  ledChain1 = LEDChainCommPtr(new LEDChainComm(LEDChainComm::ledtype_ws281x, ledChain1Name, 100));
+  ledChain2 = LEDChainCommPtr(new LEDChainComm(LEDChainComm::ledtype_ws281x, ledChain2Name, 100));
+  ledChain1->begin();
+  ledChain1->show();
+  ledChain2->begin();
+  ledChain2->show();
   setInitialized();
 }
 
 
-void Neuron::start(double aMovingAverageCount, double aThreshold)
+void Neuron::start(double aMovingAverageCount, double aThreshold,int aNumAxonLeds, int aNumBodyLeds)
 {
   movingAverageCount = aMovingAverageCount;
   threshold = aThreshold;
+  numAxonLeds = aNumAxonLeds;
+  numBodyLeds = aNumBodyLeds;
   ticketMeasure.executeOnce(boost::bind(&Neuron::measure, this, _1));
 }
 
@@ -114,6 +130,7 @@ void Neuron::fire(double aValue)
   pos = 0;
   axonState = AxonFiring;
   ticketAnimateAxon.executeOnce(boost::bind(&Neuron::animateAxon, this, _1));
+  ticketAnimateBody.executeOnce(boost::bind(&Neuron::animateBody, this, _1));
 }
 
 void Neuron::measure(MLTimer &aTimer)
@@ -127,9 +144,10 @@ void Neuron::measure(MLTimer &aTimer)
 void Neuron::animateAxon(MLTimer &aTimer)
 {
   for(int i = 0; i < numAxonLeds; i++) {
-    if(ledChain) ledChain->setColorXY(i, 0, i == pos ? 255 : 0, 0, 0);
+    uint8_t c = abs(i - pos) < 4 ? 255 : 0;
+    if(ledChain1) ledChain1->setColorXY(i, 0, c, c, 0);
   }
-  if(ledChain) ledChain->show();
+  if(ledChain1) ledChain1->show();
   if(pos++ < numAxonLeds) {
     ticketAnimateAxon.executeOnce(boost::bind(&Neuron::animateAxon, this, _1), 10 * MilliSecond);
   } else {
@@ -140,12 +158,8 @@ void Neuron::animateAxon(MLTimer &aTimer)
 void Neuron::animateBody(MLTimer &aTimer)
 {
   for(int i = 0; i < numBodyLeds; i++) {
-    if(ledChain) ledChain->setColorXY(i, 0, i == pos ? 255 : 0, 0, 0);
+    if(ledChain2) ledChain2->setColorXY(i, 0, rand() % 256, rand() % 256, rand() % 256);
   }
-  if(ledChain) ledChain->show();
-  if(pos++ < numAxonLeds) {
-    ticketAnimateAxon.executeOnce(boost::bind(&Neuron::animateAxon, this, _1), 10 * MilliSecond);
-  } else {
-    axonState = AxonIdle;
-  }
+  if(ledChain2) ledChain2->show();
+  if(axonState == AxonFiring) ticketAnimateBody.executeOnce(boost::bind(&Neuron::animateBody, this, _1), 10 * MilliSecond);
 }
