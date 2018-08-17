@@ -151,6 +151,7 @@ void DispMatrix::reset()
   for (int i=0; i<usedPanels; ++i) {
     panels[i].reset();
   }
+  usedPanels = 0;
   inherited::reset();
 }
 
