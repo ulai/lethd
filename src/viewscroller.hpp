@@ -90,13 +90,14 @@ namespace p44 {
     /// @param aStepY scroll step in Y direction
     /// @param aInterval interval between scrolling steps
     /// @param aNumSteps number of scroll steps, <0 = forever (until stopScroll() is called)
+    /// @param aRoundOffsets if set (default), current scroll offsets will be rouned to next aStepX,Y boundary first
     /// @param aStartTime time of first step in MainLoop::now() timescale. If ==Never, then now() is used
     /// @param aCompletedCB called when scroll ends because aNumSteps have been executed (but not when aborted via stopScroll())
     /// @note MainLoop::now() time is monotonic (CLOCK_MONOTONIC under Linux, but is adjusted by adjtime() from NTP
     ///   so it should remain in sync over multiple devices as long as these have NTP synced time.
     /// @note MainLoop::now() time is not absolute, but has a unspecified starting point.
     ///   and MainLoop::unixTimeToMainLoopTime() to convert a absolute starting point into now() time.
-    void startScroll(double aStepX, double aStepY, MLMicroSeconds aInterval, long aNumSteps = -1, MLMicroSeconds aStartTime = Never, SimpleCB aCompletedCB = NULL);
+    void startScroll(double aStepX, double aStepY, MLMicroSeconds aInterval, bool aRoundOffsets = true, long aNumSteps = -1, MLMicroSeconds aStartTime = Never, SimpleCB aCompletedCB = NULL);
 
     /// stop scrolling
     /// @note: completed callback will not be called

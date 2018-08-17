@@ -177,10 +177,14 @@ PixelColor ViewScroller::contentColorAt(int aX, int aY)
 }
 
 
-void ViewScroller::startScroll(double aStepX, double aStepY, MLMicroSeconds aInterval, long aNumSteps, MLMicroSeconds aStartTime, SimpleCB aCompletedCB)
+void ViewScroller::startScroll(double aStepX, double aStepY, MLMicroSeconds aInterval, bool aRoundOffsets, long aNumSteps, MLMicroSeconds aStartTime, SimpleCB aCompletedCB)
 {
   scrollStepX_milli = aStepX*1000;
   scrollStepY_milli = aStepY*1000;
+  if (aRoundOffsets) {
+    if (scrollStepX_milli) scrollOffsetX_milli = (scrollOffsetX_milli+(scrollStepX_milli>>1))/scrollStepX_milli*scrollStepX_milli;
+    if (scrollStepY_milli) scrollOffsetY_milli = (scrollOffsetY_milli+(scrollStepY_milli>>1))/scrollStepY_milli*scrollStepY_milli;
+  }
   scrollStepInterval = aInterval;
   scrollSteps = aNumSteps;
   MLMicroSeconds now = MainLoop::now();
