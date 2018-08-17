@@ -58,6 +58,7 @@ DispPanel::DispPanel(const string aChainName, int aOffsetX, int aRows, int aCols
   dispView->setScrolledView(message);
   // position main view
   dispView->setOffsetX(offsetX);
+  LOG(LOG_INFO, "- created panel with %d cols total (%d visible), %d rows, at offsetX %d, orientation %d, border left %d, right %d", cols, cols-borderLeft-borderRight, rows, offsetX, orientation, borderLeft, borderRight);
   // show operation status: dim green in first LED (if invisible), dim blue in last LED (if invisible)
   if (borderLeft>0) {
     chain->setColorXY(0, 0, 0, 100, 0);
@@ -273,7 +274,7 @@ ErrorPtr DispMatrix::processRequest(ApiRequestPtr aRequest)
       int to = 255;
       MLMicroSeconds t = 300*MilliSecond;
       if (data->get("to", o, true)) {
-        to = o->doubleValue()*2.55;
+        to = o->doubleValue()*255;
       }
       if (data->get("t", o, true)) {
         t = o->doubleValue()*MilliSecond;
@@ -292,7 +293,7 @@ ErrorPtr DispMatrix::processRequest(ApiRequestPtr aRequest)
           answer->add("backgroundcolor", JsonObject::newString(pixelToWebColor(p->message->getBackGroundColor())));
         }
         if (p->dispView) {
-          answer->add("brightness", JsonObject::newDouble((double)p->dispView->getAlpha()/2.55));
+          answer->add("brightness", JsonObject::newDouble((double)p->dispView->getAlpha()/255));
           answer->add("scrolloffsetx", JsonObject::newDouble(p->dispView->getOffsetX()));
           answer->add("scrolloffsety", JsonObject::newDouble(p->dispView->getOffsetY()));
           answer->add("scrollstepx", JsonObject::newDouble(p->dispView->getStepX()));
