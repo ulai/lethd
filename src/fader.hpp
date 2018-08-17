@@ -29,8 +29,6 @@
 
 namespace p44 {
 
-  typedef boost::function<void (double aValue)> FaderUpdateCB;
-
   class Fader : public Feature
   {
     typedef Feature inherited;

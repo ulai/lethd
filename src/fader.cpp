@@ -38,7 +38,6 @@ Fader::Fader(AnalogIoPtr aPwmDimmer) :
 
 ErrorPtr Fader::initialize(JsonObjectPtr aInitData)
 {
-  LOG(LOG_INFO, "initializing fader");
   initOperation();
   return Error::ok();
 }
@@ -86,7 +85,7 @@ ErrorPtr Fader::fade(ApiRequestPtr aRequest)
 
 void Fader::initOperation()
 {
-  LOG(LOG_INFO, "initializing fader");
+  LOG(LOG_NOTICE, "initializing fader");
   setInitialized();
 }
 

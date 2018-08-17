@@ -58,7 +58,7 @@ DispPanel::DispPanel(const string aChainName, int aOffsetX, int aRows, int aCols
   dispView->setScrolledView(message);
   // position main view
   dispView->setOffsetX(offsetX);
-  LOG(LOG_INFO, "- created panel with %d cols total (%d visible), %d rows, at offsetX %d, orientation %d, border left %d, right %d", cols, cols-borderLeft-borderRight, rows, offsetX, orientation, borderLeft, borderRight);
+  LOG(LOG_NOTICE, "- created panel with %d cols total (%d visible), %d rows, at offsetX %d, orientation %d, border left %d, right %d", cols, cols-borderLeft-borderRight, rows, offsetX, orientation, borderLeft, borderRight);
   // show operation status: dim green in first LED (if invisible), dim blue in last LED (if invisible)
   if (borderLeft>0) {
     chain->setColorXY(0, 0, 0, 100, 0);
@@ -168,7 +168,7 @@ DispMatrix::~DispMatrix()
 
 ErrorPtr DispMatrix::initialize(JsonObjectPtr aInitData)
 {
-  LOG(LOG_INFO, "initializing dispmatrix");
+  LOG(LOG_NOTICE, "initializing dispmatrix");
   reset();
   if (!aInitData->isType(json_type_array)) {
     return LethdApiError::err("init data must be array of panel specs");

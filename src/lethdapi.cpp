@@ -163,7 +163,7 @@ ErrorPtr LethdApi::reset(ApiRequestPtr aRequest)
   for (FeatureMap::iterator f = featureMap.begin(); f!=featureMap.end(); ++f) {
     if (aRequest->getRequest()->get(f->first.c_str())) {
       featureFound = true;
-      LOG(LOG_INFO, "resetting feature '%s'", f->first.c_str());
+      LOG(LOG_NOTICE, "resetting feature '%s'", f->first.c_str());
       f->second->reset();
     }
   }
