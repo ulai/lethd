@@ -56,13 +56,8 @@ DispPanel::DispPanel(const string aChainName, int aOffsetX, int aRows, int aCols
   dispView->setOrientation(orientation);
   dispView->setBackGroundColor(black); // not transparent!
   dispView->setScrolledView(message);
-
-  // %%% for now
-  message->setText("Hello World +++ ");
-  dispView->startScroll(0.25, 0, 20*MilliSecond);
-
   // position main view
-  dispView->setOffsetX(-offsetX);
+  dispView->setOffsetX(offsetX);
   // show operation status: dim green in first LED (if invisible), dim blue in last LED (if invisible)
   if (borderLeft>0) {
     chain->setColorXY(0, 0, 0, 100, 0);
@@ -76,6 +71,8 @@ DispPanel::DispPanel(const string aChainName, int aOffsetX, int aRows, int aCols
 
 DispPanel::~DispPanel()
 {
+  chain->clear();
+  chain->show();
   chain->end();
 }
 
@@ -141,6 +138,9 @@ DispMatrix::DispMatrix(const string aChainName1, const string aChainName2, const
     panels[usedPanels] = DispPanelPtr(new DispPanel(chainNames[usedPanels], 0, numRows, numCols, LED_MODULE_BORDER_LEFT, LED_MODULE_BORDER_RIGHT, View::right));
     usedPanels++;
     initOperation();
+    // have standard message scrolling
+    panels[0]->message->setText("Hello World +++ ");
+    panels[0]->dispView->startScroll(0.25, 0, 20*MilliSecond, true);
   }
 }
 
@@ -236,6 +236,7 @@ ErrorPtr DispMatrix::processRequest(ApiRequestPtr aRequest)
       double stepx = 0.25;
       double stepy = 0;
       long steps = -1; // forever
+      bool roundoffsets = true;
       MLMicroSeconds interval = 20*MilliSecond;
       MLMicroSeconds start = Never; // right away
       if (data->get("stepx", o, true)) {
@@ -250,11 +251,22 @@ ErrorPtr DispMatrix::processRequest(ApiRequestPtr aRequest)
       if (data->get("interval", o, true)) {
         interval = o->doubleValue()*MilliSecond;
       }
-      if (data->get("start", o, true)) {
-        start = MainLoop::unixTimeToMainLoopTime(o->int64Value()*MilliSecond);
+      if (data->get("roundoffsets", o, true)) {
+        roundoffsets = o->boolValue();
+      }
+      if (data->get("start", o, false)) {
+        MLMicroSeconds st;
+        if (!o) {
+          // null -> next 10-second boundary in unix time
+          st = (uint64_t)((MainLoop::unixtime()+10*Second)/10/Second)*10*Second;
+        }
+        else {
+          st = o->int64Value()*MilliSecond;
+        }
+        start = MainLoop::unixTimeToMainLoopTime(st);
       }
       if (interval<MIN_SCROLL_STEP_INTERVAL) interval = MIN_SCROLL_STEP_INTERVAL;
-      FOR_EACH_PANEL(dispView->startScroll(stepx, stepy, interval, steps, start));
+      FOR_EACH_PANEL(dispView->startScroll(stepx, stepy, interval, roundoffsets, steps, start));
       return Error::ok();
     }
     else if (cmd=="fade") {
