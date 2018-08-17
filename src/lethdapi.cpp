@@ -114,36 +114,63 @@ ErrorPtr LethdApi::processRequest(ApiRequestPtr aRequest)
 {
   JsonObjectPtr reqData = aRequest->getRequest();
   JsonObjectPtr o;
-  // first check global commands
-  if (reqData->get("cmd", o, true)) {
+  // first check for feature selector
+  if (reqData->get("feature", o, true)) {
+    if (!o->isType(json_type_string)) {
+      return LethdApiError::err("'feature' attribute must be a string");
+    }
+    string featurename = o->stringValue();
+    FeatureMap::iterator f = featureMap.find(featurename);
+    if (f==featureMap.end()) {
+      return LethdApiError::err("unknown feature '%s'", featurename.c_str());
+    }
+    if (!f->second->isInitialized()) {
+      return LethdApiError::err("feature '%s' is not yet initialized", featurename.c_str());
+    }
+    // let feature handle it
+    ErrorPtr err = f->second->processRequest(aRequest);
+    if (!Error::isOK(err)) {
+      err->prefixMessage("Feature '%s' cannot process request: ", featurename.c_str());
+    }
+    return err;
+  }
+  else {
+    // must be global command
+    if (!reqData->get("cmd", o, true)) {
+      return LethdApiError::err("missing 'feature' or 'cmd' attribute");
+    }
     string cmd = o->stringValue();
     if (cmd=="init") {
       return init(aRequest);
     }
+    else if (cmd=="reset") {
+      return reset(aRequest);
+    }
     else if (cmd=="now") {
       return now(aRequest);
     }
+    else {
+      return LethdApiError::err("unknown global command '%s'", cmd.c_str());
+    }
   }
-  // must be feature-specific command or property
-  if (!reqData->get("feature", o, true))
-    return LethdApiError::err("unknown global cmd / missing 'feature' attribute");
-  if (!o->isType(json_type_string)) {
-    return LethdApiError::err("'feature' attribute must be a string");
+}
+
+
+
+ErrorPtr LethdApi::reset(ApiRequestPtr aRequest)
+{
+  bool featureFound = false;
+  for (FeatureMap::iterator f = featureMap.begin(); f!=featureMap.end(); ++f) {
+    if (aRequest->getRequest()->get(f->first.c_str())) {
+      featureFound = true;
+      LOG(LOG_INFO, "resetting feature '%s'", f->first.c_str());
+      f->second->reset();
+    }
   }
-  string featurename = o->stringValue();
-  FeatureMap::iterator f = featureMap.find(featurename);
-  if (f==featureMap.end()) {
-    return LethdApiError::err("unknown feature '%s'", featurename.c_str());
+  if (!featureFound) {
+    return LethdApiError::err("reset does not address any known features");
   }
-  if (!f->second->isInitialized()) {
-    return LethdApiError::err("feature '%s' is not yet initialized", featurename.c_str());
-  }
-  // let feature handle it
-  ErrorPtr err = f->second->processRequest(aRequest);
-  if (!Error::isOK(err)) {
-    err->prefixMessage("Feature '%s' cannot process request: ", featurename.c_str());
-  }
-  return err;
+  return Error::ok(); // cause empty response
 }
 
 

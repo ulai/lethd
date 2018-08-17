@@ -117,6 +117,7 @@ namespace p44 {
 
 
     ErrorPtr init(ApiRequestPtr aRequest);
+    ErrorPtr reset(ApiRequestPtr aRequest);
     ErrorPtr now(ApiRequestPtr aRequest);
 
 
