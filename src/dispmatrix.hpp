@@ -96,6 +96,9 @@ namespace p44 {
     ///   Error::ok() to just send a empty response, or error to report back
     virtual ErrorPtr processRequest(ApiRequestPtr aRequest) override;
 
+    /// @return status information object for initialized feature, bool false for uninitialized
+    virtual JsonObjectPtr status() override;
+
   private:
 
     void step(MLTimer &aTimer);

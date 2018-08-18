@@ -38,8 +38,27 @@ bool Feature::isInitialized() const
 
 ErrorPtr Feature::processRequest(ApiRequestPtr aRequest)
 {
-  return LethdApiError::err("Feature '%s' cannot understand this request", getName().c_str());
+  // check status command
+  JsonObjectPtr reqData = aRequest->getRequest();
+  JsonObjectPtr o;
+  if (reqData->get("cmd", o, true)) {
+    string cmd = o->stringValue();
+    if (cmd=="status") {
+      aRequest->sendResponse(status(), ErrorPtr());
+      return ErrorPtr();
+    }
+    return LethdApiError::err("Feature '%s': unknown cmd '%s'", getName().c_str(), cmd.c_str());
+  }
+  return LethdApiError::err("Feature '%s': cannot understand request (no cmd)", getName().c_str());
 }
+
+
+JsonObjectPtr Feature::status()
+{
+  if (isInitialized()) return JsonObject::newObj();
+  return JsonObject::newBool(false);
+}
+
 
 
 void Feature::reset()

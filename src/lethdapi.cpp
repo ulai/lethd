@@ -22,7 +22,7 @@
 #include "lethdapi.hpp"
 
 #include "feature.hpp"
-
+#include "macaddress.hpp"
 
 using namespace p44;
 
@@ -149,6 +149,9 @@ ErrorPtr LethdApi::processRequest(ApiRequestPtr aRequest)
     else if (cmd=="now") {
       return now(aRequest);
     }
+    else if (cmd=="status") {
+      return status(aRequest);
+    }
     else {
       return LethdApiError::err("unknown global command '%s'", cmd.c_str());
     }
@@ -201,6 +204,25 @@ ErrorPtr LethdApi::now(ApiRequestPtr aRequest)
 {
   JsonObjectPtr answer = JsonObject::newObj();
   answer->add("now", JsonObject::newInt64(MainLoop::unixtime()/MilliSecond));
+  aRequest->sendResponse(answer, ErrorPtr());
+  return ErrorPtr();
+}
+
+
+ErrorPtr LethdApi::status(ApiRequestPtr aRequest)
+{
+  JsonObjectPtr answer = JsonObject::newObj();
+  // - list initialized features
+  JsonObjectPtr features = JsonObject::newObj();
+  for (FeatureMap::iterator f = featureMap.begin(); f!=featureMap.end(); ++f) {
+    features->add(f->first.c_str(), f->second->status());
+  }
+  answer->add("features", features);
+  // - MAC address and IPv4
+  answer->add("macaddress", JsonObject::newString(macAddressToString(macAddress(), ':')));
+  answer->add("ipv4", JsonObject::newString(ipv4ToString(ipv4Address())));
+  answer->add("now", JsonObject::newInt64(MainLoop::unixtime()/MilliSecond));
+  // - return
   aRequest->sendResponse(answer, ErrorPtr());
   return ErrorPtr();
 }

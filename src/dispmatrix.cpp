@@ -282,30 +282,7 @@ ErrorPtr DispMatrix::processRequest(ApiRequestPtr aRequest)
       FOR_EACH_PANEL(dispView->fadeTo(to, t));
       return Error::ok();
     }
-    else if (cmd=="status") {
-      JsonObjectPtr answer = JsonObject::newObj();
-      if (usedPanels>0) {
-        DispPanelPtr p = panels[0];
-        if (p->message) {
-          answer->add("text", JsonObject::newString(p->message->getText()));
-          answer->add("color", JsonObject::newString(pixelToWebColor(p->message->getTextColor())));
-          answer->add("spacing", JsonObject::newInt32(p->message->getTextSpacing()));
-          answer->add("backgroundcolor", JsonObject::newString(pixelToWebColor(p->message->getBackGroundColor())));
-        }
-        if (p->dispView) {
-          answer->add("brightness", JsonObject::newDouble((double)p->dispView->getAlpha()/255));
-          answer->add("scrolloffsetx", JsonObject::newDouble(p->dispView->getOffsetX()));
-          answer->add("scrolloffsety", JsonObject::newDouble(p->dispView->getOffsetY()));
-          answer->add("scrollstepx", JsonObject::newDouble(p->dispView->getStepX()));
-          answer->add("scrollstepy", JsonObject::newDouble(p->dispView->getStepY()));
-          answer->add("scrollsteptime", JsonObject::newDouble(p->dispView->getScrollStepInterval()/MilliSecond));
-          answer->add("unixtime", JsonObject::newInt64(MainLoop::unixtime()/MilliSecond));
-        }
-      }
-      aRequest->sendResponse(answer, ErrorPtr());
-      return ErrorPtr();
-    }
-    return LethdApiError::err("unknown cmd '%s'", cmd.c_str());
+    return inherited::processRequest(aRequest);
   }
   else {
     // decode properties
@@ -335,6 +312,33 @@ ErrorPtr DispMatrix::processRequest(ApiRequestPtr aRequest)
     }
     return Error::ok();
   }
+}
+
+
+JsonObjectPtr DispMatrix::status()
+{
+  JsonObjectPtr answer = inherited::status();
+  if (answer->isType(json_type_object)) {
+    if (usedPanels>0) {
+      DispPanelPtr p = panels[0];
+      if (p->message) {
+        answer->add("text", JsonObject::newString(p->message->getText()));
+        answer->add("color", JsonObject::newString(pixelToWebColor(p->message->getTextColor())));
+        answer->add("spacing", JsonObject::newInt32(p->message->getTextSpacing()));
+        answer->add("backgroundcolor", JsonObject::newString(pixelToWebColor(p->message->getBackGroundColor())));
+      }
+      if (p->dispView) {
+        answer->add("brightness", JsonObject::newDouble((double)p->dispView->getAlpha()/255));
+        answer->add("scrolloffsetx", JsonObject::newDouble(p->dispView->getOffsetX()));
+        answer->add("scrolloffsety", JsonObject::newDouble(p->dispView->getOffsetY()));
+        answer->add("scrollstepx", JsonObject::newDouble(p->dispView->getStepX()));
+        answer->add("scrollstepy", JsonObject::newDouble(p->dispView->getStepY()));
+        answer->add("scrollsteptime", JsonObject::newDouble(p->dispView->getScrollStepInterval()/MilliSecond));
+        answer->add("unixtime", JsonObject::newInt64(MainLoop::unixtime()/MilliSecond));
+      }
+    }
+  }
+  return answer;
 }
 
 

@@ -53,13 +53,17 @@ ErrorPtr Fader::processRequest(ApiRequestPtr aRequest)
   if (cmd=="fade") {
     return fade(aRequest);
   }
-  if (cmd=="status") {
-    JsonObjectPtr answer = JsonObject::newObj();
+  return inherited::processRequest(aRequest);
+}
+
+
+JsonObjectPtr Fader::status()
+{
+  JsonObjectPtr answer = inherited::status();
+  if (answer->isType(json_type_object)) {
     answer->add("brightness", JsonObject::newDouble(current()));
-    aRequest->sendResponse(answer, ErrorPtr());
-    return ErrorPtr();
   }
-  return LethdApiError::err("unknown cmd '%s'", cmd.c_str());
+  return answer;
 }
 
 

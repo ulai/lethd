@@ -92,7 +92,17 @@ ErrorPtr Neuron::processRequest(ApiRequestPtr aRequest)
   if (cmd=="fire") {
     return fire(aRequest);
   }
-  return LethdApiError::err("unknown cmd '%s'", cmd.c_str());
+  return inherited::processRequest(aRequest);
+}
+
+
+JsonObjectPtr Neuron::status()
+{
+  JsonObjectPtr answer = inherited::status();
+  if (answer->isType(json_type_object)) {
+    // TODO: add info here
+  }
+  return answer;
 }
 
 
