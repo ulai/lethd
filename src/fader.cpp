@@ -69,7 +69,7 @@ ErrorPtr Fader::fade(ApiRequestPtr aRequest)
   JsonObjectPtr o;
   double from = current();
   if (data->get("from", o, true)) from = o->doubleValue();
-  double to = 50;
+  double to = 1;
   if (data->get("to", o, true)) to = o->doubleValue();
   MLMicroSeconds t = 300*MilliSecond;
   if (data->get("t", o, true)) t = o->int64Value() * MilliSecond;
