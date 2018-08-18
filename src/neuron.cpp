@@ -38,6 +38,11 @@ Neuron::Neuron(const string aLedChain1Name, const string aLedChain2Name, AnalogI
     initOperation();
     std::vector<std::string> neuronOptions;
     boost::split(neuronOptions, s, boost::is_any_of(","), boost::token_compress_on);
+    if(neuronOptions.size() != 4) {
+      fprintf(stderr, "neuron needs 4 parameters: mvgAvgCnt,threshold,nAxonLeds,nBodyLeds\n");
+      CmdLineApp::sharedCmdLineApp()->terminateApp(EXIT_FAILURE);
+      return;
+    }
     int movingAverageCount = atoi(neuronOptions[0].c_str());
     int threshold = atoi(neuronOptions[1].c_str());
     int numAxonLeds = atoi(neuronOptions[2].c_str());

@@ -118,7 +118,7 @@ public:
       { 0  , "ledchain2",      true,  "devicepath;ledchain2 device to use" },
       { 0  , "ledchain3",      true,  "devicepath;ledchain3 device to use" },
       { 0  , "lethdapiport",   true,  "port;server port number for lETHd JSON API (default=none)" },
-      { 0  , "neuron",         true,  "movingAverageCount,threshold;start neuron" },
+      { 0  , "neuron",         true,  "mvgAvgCnt,threshold,nAxonLeds,nBodyLeds;start neuron" },
       { 0  , "light",          false, "start light" },
       { 0  , "dispmatrix",     true,  "numcols;start display matrix" },
       { 0  , "jsonapiport",    true,  "port;server port number for JSON API (default=none)" },
@@ -220,7 +220,7 @@ public:
     lethdApi->send(aValue);
   }
 
-  
+
 
   // MARK: ==== Button
 
