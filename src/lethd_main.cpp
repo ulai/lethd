@@ -124,9 +124,9 @@ public:
       { 0  , "jsonapiport",    true,  "port;server port number for JSON API (default=none)" },
       { 0  , "jsonapinonlocal",false, "allow JSON API from non-local clients" },
       { 0  , "jsonapiipv6",    false, "JSON API on IPv6" },
-      { 0  , "button",         true,  "input pinspec; device button" },
-      { 0  , "greenled",       true,  "output pinspec; green device LED" },
-      { 0  , "redled",         true,  "output pinspec; red device LED" },
+      { 0  , "button",         true,  "input pinspec;device button" },
+      { 0  , "greenled",       true,  "output pinspec;green device LED" },
+      { 0  , "redled",         true,  "output pinspec;red device LED" },
       { 'l', "loglevel",       true,  "level;set max level of log message detail to show on stdout" },
       { 0  , "errlevel",       true,  "level;set max level for log messages to go to stderr as well" },
       { 0  , "dontlogerrors",  false, "don't duplicate error messages (see --errlevel) on stdout" },
@@ -134,6 +134,7 @@ public:
       { 'r', "resourcepath",   true,  "path;path to the images and sounds folders" },
       { 'd', "datapath",       true,  "path;path to the r/w persistent data" },
       { 'h', "help",           false, "show this text" },
+      { 'V', "version",        false, "show version" },
       { 0, NULL } // list terminator
     };
 

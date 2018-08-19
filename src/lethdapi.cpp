@@ -23,6 +23,7 @@
 
 #include "feature.hpp"
 #include "macaddress.hpp"
+#include "application.hpp"
 
 using namespace p44;
 
@@ -222,6 +223,7 @@ ErrorPtr LethdApi::status(ApiRequestPtr aRequest)
   answer->add("macaddress", JsonObject::newString(macAddressToString(macAddress(), ':')));
   answer->add("ipv4", JsonObject::newString(ipv4ToString(ipv4Address())));
   answer->add("now", JsonObject::newInt64(MainLoop::unixtime()/MilliSecond));
+  answer->add("version", JsonObject::newString(Application::sharedApplication()->version()));
   // - return
   aRequest->sendResponse(answer, ErrorPtr());
   return ErrorPtr();
