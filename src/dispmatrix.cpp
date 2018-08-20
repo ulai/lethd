@@ -117,6 +117,23 @@ void DispPanel::setOffsetX(double aOffsetX)
 }
 
 
+void DispPanel::setText(const string aText)
+{
+  if (dispView) {
+    // due to offset wraparound according to scrolled view's content size (~=text length)
+    // current offset might be smaller than panel's offsetX right now. This must be
+    // adjusted BEFORE content size changes
+    double ox = dispView->getOffsetX();
+    double cx = dispView->getContentSizeX();
+    while (cx>0 && ox<offsetX) ox += cx;
+    dispView->setOffsetX(ox);
+    // now we can set new text (and content size)
+    if (message) message->setText(aText);
+  }
+}
+
+
+
 
 // MARK: ===== DispMatrix
 
@@ -140,7 +157,7 @@ DispMatrix::DispMatrix(const string aChainName1, const string aChainName2, const
     usedPanels++;
     initOperation();
     // have standard message scrolling
-    panels[0]->message->setText("Hello World +++ ");
+    panels[0]->setText("Hello World +++ ");
     panels[0]->dispView->startScroll(0.25, 0, 20*MilliSecond, true);
   }
 }
@@ -288,7 +305,7 @@ ErrorPtr DispMatrix::processRequest(ApiRequestPtr aRequest)
     // decode properties
     if (data->get("text", o, true)) {
       string msg = o->stringValue();
-      FOR_EACH_PANEL(message->setText(msg));
+      FOR_EACH_PANEL(setText(msg));
     }
     if (data->get("color", o, true)) {
       PixelColor p = webColorToPixel(o->stringValue());

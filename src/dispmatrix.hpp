@@ -59,6 +59,7 @@ namespace p44 {
   private:
 
     void setOffsetX(double aOffsetX);
+    void setText(const string aText);
     void updateDisplay();
 
   };

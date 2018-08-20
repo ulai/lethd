@@ -67,6 +67,9 @@ namespace p44 {
     /// @param aScrolledView the view of which a part should be shown in this view.
     void setScrolledView(ViewPtr aScrolledView) { scrolledView = aScrolledView; makeDirty(); }
 
+    /// @return the view being scrolled
+    ViewPtr getScrolledView() { return scrolledView; }
+
     /// set scroll offsets
     /// @param aOffsetX X direction scroll offset, subpixel distances allowed
     /// @note the scroll offset describes the distance from this view's content origin (not its origin on the parent view!)

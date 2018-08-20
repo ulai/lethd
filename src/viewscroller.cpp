@@ -83,20 +83,21 @@ MLMicroSeconds ViewScroller::step()
         scrollOffsetY_milli += scrollStepY_milli;
         makeDirty();
         // limit coordinate increase in wraparound scroll view
+        // Note: might need multiple rounds after scrolled view's content size has changed to get back in range
         if (scrolledView) {
           WrapMode wm = scrolledView->getWrapMode();
           if (wm&wrapX) {
             long csx_milli = scrolledView->getContentSizeX()*1000;
-            if ((wm&wrapXmax) && scrollOffsetX_milli>=csx_milli)
+            while ((wm&wrapXmax) && scrollOffsetX_milli>=csx_milli && csx_milli>0)
               scrollOffsetX_milli-=csx_milli;
-            if ((wm&wrapXmin) && scrollOffsetX_milli<0)
+            while ((wm&wrapXmin) && scrollOffsetX_milli<0 && csx_milli>0)
               scrollOffsetX_milli+=csx_milli;
           }
           if (wm&wrapY) {
             long csy_milli = scrolledView->getContentSizeY()*1000;
-            if ((wm&wrapYmax) && scrollOffsetY_milli>=csy_milli)
+            while ((wm&wrapYmax) && scrollOffsetY_milli>=csy_milli && csy_milli>0)
               scrollOffsetY_milli-=csy_milli;
-            if ((wm&wrapYmin) && scrollOffsetY_milli<0)
+            while ((wm&wrapYmin) && scrollOffsetY_milli<0 && csy_milli>0)
               scrollOffsetY_milli+=csy_milli;
           }
         }
