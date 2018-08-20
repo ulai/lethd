@@ -124,7 +124,7 @@ void DispPanel::setText(const string aText)
     // current offset might be smaller than panel's offsetX right now. This must be
     // adjusted BEFORE content size changes
     double ox = dispView->getOffsetX();
-    double cx = dispView->getContentSizeX();
+    double cx = dispView->getScrolledView()->getContentSizeX();
     while (cx>0 && ox<offsetX) ox += cx;
     dispView->setOffsetX(ox);
     // now we can set new text (and content size)
