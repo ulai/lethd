@@ -302,13 +302,13 @@ void p44::mixinPixel(PixelColor &aMainPixel, PixelColor aOutsidePixel, uint8_t a
         // - alpha boost compensates for energy
         uint16_t ab = 65025/alpha;
         // Note: aAmountOutside is on the energy scale, not brightness, so need to add in PWM scale!
-        uint16_t r_e = ( ((uint16_t)brightnessToPwm(dimVal(aMainPixel.r, aMainPixel.a))*(255-aAmountOutside)) + ((uint32_t)brightnessToPwm(dimVal(aOutsidePixel.r, aOutsidePixel.a))*(aAmountOutside)) )>>8;
-        uint16_t g_e = ( ((uint16_t)brightnessToPwm(dimVal(aMainPixel.g, aMainPixel.a))*(255-aAmountOutside)) + ((uint32_t)brightnessToPwm(dimVal(aOutsidePixel.g, aOutsidePixel.a))*(aAmountOutside)) )>>8;
-        uint16_t b_e = ( ((uint16_t)brightnessToPwm(dimVal(aMainPixel.b, aMainPixel.a))*(255-aAmountOutside)) + ((uint32_t)brightnessToPwm(dimVal(aOutsidePixel.b, aOutsidePixel.a))*(aAmountOutside)) )>>8;
+        uint16_t r_e = ( (((uint16_t)brightnessToPwm(dimVal(aMainPixel.r, aMainPixel.a))+1)*(255-aAmountOutside)) + (((uint16_t)brightnessToPwm(dimVal(aOutsidePixel.r, aOutsidePixel.a))+1)*(aAmountOutside)) )>>8;
+        uint16_t g_e = ( (((uint16_t)brightnessToPwm(dimVal(aMainPixel.g, aMainPixel.a))+1)*(255-aAmountOutside)) + (((uint16_t)brightnessToPwm(dimVal(aOutsidePixel.g, aOutsidePixel.a))+1)*(aAmountOutside)) )>>8;
+        uint16_t b_e = ( (((uint16_t)brightnessToPwm(dimVal(aMainPixel.b, aMainPixel.a))+1)*(255-aAmountOutside)) + (((uint16_t)brightnessToPwm(dimVal(aOutsidePixel.b, aOutsidePixel.a))+1)*(aAmountOutside)) )>>8;
         // - back to brightness, add alpha boost
-        uint16_t r = (pwmToBrightness(r_e)*ab)>>8;
-        uint16_t g = (pwmToBrightness(g_e)*ab)>>8;
-        uint16_t b = (pwmToBrightness(b_e)*ab)>>8;
+        uint16_t r = (((uint16_t)pwmToBrightness(r_e)+1)*ab)>>8;
+        uint16_t g = (((uint16_t)pwmToBrightness(g_e)+1)*ab)>>8;
+        uint16_t b = (((uint16_t)pwmToBrightness(b_e)+1)*ab)>>8;
         // - check max brightness
         uint16_t m = r; if (g>m) m = g; if (b>m) m = b;
         if (m>255) {
@@ -340,9 +340,9 @@ void p44::mixinPixel(PixelColor &aMainPixel, PixelColor aOutsidePixel, uint8_t a
     }
     else {
       // no transparency on either side, simplified case
-      uint16_t r_e = ( ((uint16_t)brightnessToPwm(aMainPixel.r)*(255-aAmountOutside)) + ((uint16_t)brightnessToPwm(aOutsidePixel.r)*(aAmountOutside)) )>>8;
-      uint16_t g_e = ( ((uint16_t)brightnessToPwm(aMainPixel.g)*(255-aAmountOutside)) + ((uint16_t)brightnessToPwm(aOutsidePixel.g)*(aAmountOutside)) )>>8;
-      uint16_t b_e = ( ((uint16_t)brightnessToPwm(aMainPixel.b)*(255-aAmountOutside)) + ((uint16_t)brightnessToPwm(aOutsidePixel.b)*(aAmountOutside)) )>>8;
+      uint16_t r_e = ( (((uint16_t)brightnessToPwm(aMainPixel.r)+1)*(255-aAmountOutside)) + (((uint16_t)brightnessToPwm(aOutsidePixel.r)+1)*(aAmountOutside)) )>>8;
+      uint16_t g_e = ( (((uint16_t)brightnessToPwm(aMainPixel.g)+1)*(255-aAmountOutside)) + (((uint16_t)brightnessToPwm(aOutsidePixel.g)+1)*(aAmountOutside)) )>>8;
+      uint16_t b_e = ( (((uint16_t)brightnessToPwm(aMainPixel.b)+1)*(255-aAmountOutside)) + (((uint16_t)brightnessToPwm(aOutsidePixel.b)+1)*(aAmountOutside)) )>>8;
       aMainPixel.r = r_e>255 ? 255 : pwmToBrightness(r_e);
       aMainPixel.g = g_e>255 ? 255 : pwmToBrightness(g_e);
       aMainPixel.b = b_e>255 ? 255 : pwmToBrightness(b_e);
