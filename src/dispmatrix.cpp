@@ -40,7 +40,8 @@ DispPanel::DispPanel(const string aChainName, int aOffsetX, int aRows, int aCols
   cols(aCols),
   borderLeft(aBorderLeft),
   borderRight(aBorderRight),
-  orientation(aOrientation)
+  orientation(aOrientation),
+  lastUpdate(Never)
 {
   // create chain driver
   chain = LEDChainCommPtr(new LEDChainComm(LEDChainComm::ledtype_ws281x, aChainName, rows*cols, cols, false, true));
@@ -80,7 +81,7 @@ DispPanel::~DispPanel()
 
 
 #define MAX_STEP_INTERVAL (20*MilliSecond)
-
+#define MAX_UPDATE_INTERVAL (100*MilliSecond)
 
 MLMicroSeconds DispPanel::step()
 {
@@ -97,16 +98,25 @@ MLMicroSeconds DispPanel::step()
 
 void DispPanel::updateDisplay()
 {
-  if (dispView && dispView->isDirty()) {
-    for (int x=borderRight; x<cols-borderLeft; x++) {
-      for (int y=0; y<rows; y++) {
-        PixelColor p = dispView->colorAt(x-borderRight, y);
-        PixelColor dp = dimmedPixel(p, p.a);
-        chain->setColorXY(x, y, dp.r, dp.g, dp.b);
+  if (dispView) {
+    bool dirty = dispView->isDirty();
+    MLMicroSeconds now = MainLoop::now();
+    if (dirty || now>lastUpdate+MAX_UPDATE_INTERVAL) {
+      lastUpdate = now;
+      if (dirty) {
+        // update LED chain content buffer
+        for (int x=borderRight; x<cols-borderLeft; x++) {
+          for (int y=0; y<rows; y++) {
+            PixelColor p = dispView->colorAt(x-borderRight, y);
+            PixelColor dp = dimmedPixel(p, p.a);
+            chain->setColorXY(x, y, dp.r, dp.g, dp.b);
+          }
+        }
+        dispView->updated();
       }
+      // update hardware (refresh actual LEDs, cleans away possible glitches
+      chain->show();
     }
-    chain->show();
-    dispView->updated();
   }
 }
 
@@ -367,8 +377,6 @@ void DispMatrix::initOperation()
   setInitialized();
 }
 
-
-#define MAX_STEP_INTERVAL (20*MilliSecond)
 
 void DispMatrix::step(MLTimer &aTimer)
 {

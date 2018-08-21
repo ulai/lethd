@@ -47,6 +47,7 @@ namespace p44 {
     ViewScrollerPtr dispView;
     TextViewPtr message;
 
+    MLMicroSeconds lastUpdate;
 
   public:
 
