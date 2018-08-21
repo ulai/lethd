@@ -173,8 +173,15 @@ void Neuron::animateAxon(MLTimer &aTimer)
 void Neuron::animateBody(MLTimer &aTimer)
 {
   for(int i = 0; i < numBodyLeds; i++) {
-    if(ledChain2) ledChain2->setColorXY(i, 0, rand() % 256, rand() % 256, rand() % 256);
+    uint8_t c = sin(((double)pos / numAxonLeds) * M_PI) * 255;
+    if(ledChain2) ledChain2->setColorXY(i, 0, c, c, 0);
+  }
+  if(axonState == AxonFiring) {
+    ticketAnimateBody.executeOnce(boost::bind(&Neuron::animateBody, this, _1), 10 * MilliSecond);
+  } else {
+    for(int i = 0; i < numBodyLeds; i++) {
+      if(ledChain2) ledChain2->setColorXY(i, 0, 0, 0, 0);
+    }
   }
   if(ledChain2) ledChain2->show();
-  if(axonState == AxonFiring) ticketAnimateBody.executeOnce(boost::bind(&Neuron::animateBody, this, _1), 10 * MilliSecond);
 }

@@ -27,6 +27,8 @@
 
 #include "feature.hpp"
 
+#include <math.h>
+
 namespace p44 {
 
   typedef boost::function<void (double)> NeuronSpikeCB;
