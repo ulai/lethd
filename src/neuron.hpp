@@ -54,12 +54,15 @@ namespace p44 {
 
     enum AxonState { AxonIdle, AxonFiring };
     AxonState axonState = AxonIdle;
+    enum BodyState { BodyIdle, BodyGlowing, BodyFadeOut };
+    BodyState bodyState = BodyIdle;
 
     MLTicket ticketMeasure;
     MLTicket ticketAnimateAxon;
     MLTicket ticketAnimateBody;
 
     int pos = 0;
+    double phi = 0;
 
   public:
 
