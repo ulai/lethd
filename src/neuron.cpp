@@ -118,7 +118,7 @@ ErrorPtr Neuron::fire(ApiRequestPtr aRequest)
 
 void Neuron::initOperation()
 {
-  LOG(LOG_INFO, "initializing neuron");
+  LOG(LOG_NOTICE, "initializing neuron");
   ledChain1 = LEDChainCommPtr(new LEDChainComm(LEDChainComm::ledtype_ws281x, ledChain1Name, 100));
   ledChain2 = LEDChainCommPtr(new LEDChainComm(LEDChainComm::ledtype_ws281x, ledChain2Name, 100));
   ledChain1->begin();

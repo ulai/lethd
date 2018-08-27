@@ -19,12 +19,12 @@
 //  along with pixelboardd. If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "fader.hpp"
+#include "light.hpp"
 #include "application.hpp"
 
 using namespace p44;
 
-Fader::Fader(AnalogIoPtr aPwmDimmer) :
+Light::Light(AnalogIoPtr aPwmDimmer) :
   inherited("light"),
   pwmDimmer(aPwmDimmer)
 {
@@ -34,16 +34,16 @@ Fader::Fader(AnalogIoPtr aPwmDimmer) :
   }
 }
 
-// MARK: ==== fader API
+// MARK: ==== light API
 
-ErrorPtr Fader::initialize(JsonObjectPtr aInitData)
+ErrorPtr Light::initialize(JsonObjectPtr aInitData)
 {
   initOperation();
   return Error::ok();
 }
 
 
-ErrorPtr Fader::processRequest(ApiRequestPtr aRequest)
+ErrorPtr Light::processRequest(ApiRequestPtr aRequest)
 {
   JsonObjectPtr o = aRequest->getRequest()->get("cmd");
   if (!o) {
@@ -57,7 +57,7 @@ ErrorPtr Fader::processRequest(ApiRequestPtr aRequest)
 }
 
 
-JsonObjectPtr Fader::status()
+JsonObjectPtr Light::status()
 {
   JsonObjectPtr answer = inherited::status();
   if (answer->isType(json_type_object)) {
@@ -67,7 +67,7 @@ JsonObjectPtr Fader::status()
 }
 
 
-ErrorPtr Fader::fade(ApiRequestPtr aRequest)
+ErrorPtr Light::fade(ApiRequestPtr aRequest)
 {
   JsonObjectPtr data = aRequest->getRequest();
   JsonObjectPtr o;
@@ -84,26 +84,26 @@ ErrorPtr Fader::fade(ApiRequestPtr aRequest)
 }
 
 
-// MARK: ==== fader operation
+// MARK: ==== light operation
 
 
-void Fader::initOperation()
+void Light::initOperation()
 {
-  LOG(LOG_NOTICE, "initializing fader");
+  LOG(LOG_NOTICE, "initializing light");
   setInitialized();
 }
 
 
-void Fader::fade(double aFrom, double aTo, MLMicroSeconds aFadeTime, MLMicroSeconds aStartTime)
+void Light::fade(double aFrom, double aTo, MLMicroSeconds aFadeTime, MLMicroSeconds aStartTime)
 {
   if(fabs(aFrom - aTo) < 1e-4) return;
   currentValue = aFrom;
   to = aTo;
   dv = (aTo - aFrom) / (aFadeTime / dt);
-  ticket.executeOnceAt(boost::bind(&Fader::update, this, _1), aStartTime);
+  ticket.executeOnceAt(boost::bind(&Light::update, this, _1), aStartTime);
 }
 
-void Fader::update(MLTimer &aTimer)
+void Light::update(MLTimer &aTimer)
 {
   double newValue = currentValue + dv;
   bool done = false;
@@ -112,17 +112,17 @@ void Fader::update(MLTimer &aTimer)
     done = true;
   }
   currentValue = newValue;
-  LOG(LOG_DEBUG, "New fader value = %.1f", currentValue);
+  LOG(LOG_DEBUG, "New light value = %.1f", currentValue);
   pwmDimmer->setValue(brightnessToPWM(currentValue));
   if(!done) MainLoop::currentMainLoop().retriggerTimer(aTimer, dt);
 }
 
-double Fader::current()
+double Light::current()
 {
   return currentValue;
 }
 
-double Fader::brightnessToPWM(double aBrightness)
+double Light::brightnessToPWM(double aBrightness)
 {
   return 100*((exp(aBrightness*4/1)-1)/(exp(4)-1));
 }

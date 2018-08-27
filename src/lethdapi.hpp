@@ -120,6 +120,7 @@ namespace p44 {
     ErrorPtr reset(ApiRequestPtr aRequest);
     ErrorPtr now(ApiRequestPtr aRequest);
     ErrorPtr status(ApiRequestPtr aRequest);
+    ErrorPtr ping(ApiRequestPtr aRequest);
     ErrorPtr features(ApiRequestPtr aRequest);
 
     ErrorPtr fire(ApiRequestPtr aRequest);

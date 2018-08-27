@@ -27,7 +27,7 @@
 
 #include "lethdapi.hpp"
 
-#include "fader.hpp"
+#include "light.hpp"
 #include "neuron.hpp"
 #include "dispmatrix.hpp"
 
@@ -174,8 +174,8 @@ public:
       // create API
       lethdApi = LethdApiPtr(new LethdApi);
       // add features
-      // - fader
-      lethdApi->addFeature(FeaturePtr(new Fader(
+      // - light
+      lethdApi->addFeature(FeaturePtr(new Light(
         pwmDimmer
       )));
       // - neuron

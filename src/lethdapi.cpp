@@ -153,6 +153,9 @@ ErrorPtr LethdApi::processRequest(ApiRequestPtr aRequest)
     else if (cmd=="status") {
       return status(aRequest);
     }
+    else if (cmd=="ping") {
+      return ping(aRequest);
+    }
     else {
       return LethdApiError::err("unknown global command '%s'", cmd.c_str());
     }
@@ -225,6 +228,15 @@ ErrorPtr LethdApi::status(ApiRequestPtr aRequest)
   answer->add("now", JsonObject::newInt64(MainLoop::unixtime()/MilliSecond));
   answer->add("version", JsonObject::newString(Application::sharedApplication()->version()));
   // - return
+  aRequest->sendResponse(answer, ErrorPtr());
+  return ErrorPtr();
+}
+
+
+ErrorPtr LethdApi::ping(ApiRequestPtr aRequest)
+{
+  JsonObjectPtr answer = JsonObject::newObj();
+  answer->add("pong", JsonObject::newBool(true));
   aRequest->sendResponse(answer, ErrorPtr());
   return ErrorPtr();
 }

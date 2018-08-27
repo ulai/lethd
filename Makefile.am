@@ -128,8 +128,8 @@ lethd_SOURCES = \
   src/viewanimator.hpp \
   src/lethdapi.cpp \
   src/lethdapi.hpp \
-  src/fader.cpp \
-  src/fader.hpp \
+  src/light.cpp \
+  src/light.hpp \
   src/neuron.cpp \
   src/neuron.hpp \
   src/dispmatrix.cpp \

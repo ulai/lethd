@@ -19,8 +19,8 @@
 //  along with pixelboardd. If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef __lethd_fader_hpp__
-#define __lethd_fader_hpp__
+#ifndef __lethd_light_hpp__
+#define __lethd_light_hpp__
 
 #include "analogio.hpp"
 
@@ -29,7 +29,7 @@
 
 namespace p44 {
 
-  class Fader : public Feature
+  class Light : public Feature
   {
     typedef Feature inherited;
 
@@ -42,7 +42,7 @@ namespace p44 {
 
   public:
 
-    Fader(AnalogIoPtr aPwmDimmer);
+    Light(AnalogIoPtr aPwmDimmer);
 
     void fade(double aFrom, double aTo, MLMicroSeconds aFadeTime, MLMicroSeconds aStartTime);
     double current();
@@ -88,4 +88,4 @@ namespace p44 {
 
 
 
-#endif /* __lethd_fader_hpp__ */
+#endif /* __lethd_light_hpp__ */
