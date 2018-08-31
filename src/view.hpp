@@ -91,12 +91,12 @@ namespace p44 {
   void mixinPixel(PixelColor &aMainPixel, PixelColor aOutsidePixel, uint8_t aAmountOutside);
 
   /// convert Web color to pixel color
-  /// @param aWebColor: web style #ARGB or #AARRGGBB color, alpha (A, AA) is optional, "#" is also optional
+  /// @param aWebColor web style #ARGB or #AARRGGBB color, alpha (A, AA) is optional, "#" is also optional
   /// @return pixel color. If Alpha is not specified, it is set to fully opaque = 255.
   PixelColor webColorToPixel(const string aWebColor);
 
   /// convert pixel color to web color
-  /// @param aPixelColor: pixel color
+  /// @param aPixelColor pixel color
   /// @return web color in RRGGBB style or AARRGGBB when alpha is not fully opaque (==255)
   string pixelToWebColor(const PixelColor aPixelColor);
 
