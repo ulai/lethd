@@ -186,8 +186,13 @@ ErrorPtr LethdApi::init(ApiRequestPtr aRequest)
 {
   bool featureFound = false;
   ErrorPtr err;
+  JsonObjectPtr reqData = aRequest->getRequest();
+  JsonObjectPtr o = reqData->get("gridcoordinate");
+  if (o) {
+    gridcoordinate = o->stringValue();
+  }
   for (FeatureMap::iterator f = featureMap.begin(); f!=featureMap.end(); ++f) {
-    JsonObjectPtr initData = aRequest->getRequest()->get(f->first.c_str());
+    JsonObjectPtr initData = reqData->get(f->first.c_str());
     if (initData) {
       featureFound = true;
       err = f->second->initialize(initData);
@@ -222,6 +227,8 @@ ErrorPtr LethdApi::status(ApiRequestPtr aRequest)
     features->add(f->first.c_str(), f->second->status());
   }
   answer->add("features", features);
+  // - grid coordinate
+  answer->add("gridcoordinate", JsonObject::newString(gridcoordinate));
   // - MAC address and IPv4
   answer->add("macaddress", JsonObject::newString(macAddressToString(macAddress(), ':')));
   answer->add("ipv4", JsonObject::newString(ipv4ToString(ipv4Address())));

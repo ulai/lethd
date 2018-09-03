@@ -91,6 +91,8 @@ namespace p44 {
     typedef std::map<string, FeaturePtr> FeatureMap;
     FeatureMap featureMap;
 
+    string gridcoordinate;
+
   public:
 
     LethdApi();
