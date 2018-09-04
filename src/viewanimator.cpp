@@ -232,7 +232,7 @@ ErrorPtr ViewAnimator::configureView(JsonObjectPtr aViewConfig)
         }
       }
     }
-    bool doStart = true;
+    bool doStart = false;
     bool doRepeat = false;
     if (aViewConfig->get("start", o)) {
       doStart = o->boolValue();

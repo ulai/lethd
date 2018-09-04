@@ -184,6 +184,7 @@ namespace p44 {
     int contentSizeX; ///< X size of content (in content coordinates)
     int contentSizeY; ///< Y size of content (in content coordinates)
     WrapMode contentWrapMode; ///< content wrap mode
+    bool contentIsMask; ///< if set, only alpha of content is used on foreground color
 
     #if ENABLE_VIEWCONFIG
     string label; ///< label of the view for addressing it
@@ -218,7 +219,7 @@ namespace p44 {
     virtual void setFrame(int aOriginX, int aOriginY, int aSizeX, int aSizeY);
 
     /// set the view's background color
-    /// @param aBackGroundColor color of pixels not covered by content
+    /// @param aBackgroundColor color of pixels not covered by content
     void setBackgroundColor(PixelColor aBackgroundColor) { backgroundColor = aBackgroundColor; makeDirty(); };
 
     /// @return current background color

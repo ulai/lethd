@@ -41,6 +41,7 @@ View::View()
   backgroundColor = { .r=0, .g=0, .b=0, .a=0 }; // transparent background,
   foregroundColor = { .r=255, .g=255, .b=255, .a=255 }; // fully white foreground...
   alpha = 255; // but content pixels passed trough 1:1
+  contentIsMask = false; // content color will be used
   targetAlpha = -1; // not fading
 }
 
@@ -206,6 +207,12 @@ PixelColor View::colorAt(int aX, int aY)
       }
       // now get content pixel
       pc = contentColorAt(x, y);
+      if (contentIsMask) {
+        // use only alpha of content, color comes from foregroundColor
+        pc.r = foregroundColor.r;
+        pc.g = foregroundColor.g;
+        pc.b = foregroundColor.b;
+      }
       #if SHOW_ORIGIN
       if (x==0 && y==0) {
         return { .r=255, .g=0, .b=0, .a=255 };
@@ -448,6 +455,9 @@ ErrorPtr View::configureView(JsonObjectPtr aViewConfig)
   }
   if (aViewConfig->get("wrapmode", o)) {
     setWrapMode(o->int32Value());
+  }
+  if (aViewConfig->get("mask", o)) {
+    contentIsMask = o->boolValue();
   }
   if (aViewConfig->get("content_x", o)) {
     offsetX = o->int32Value(); makeDirty();
