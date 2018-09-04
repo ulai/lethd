@@ -130,19 +130,19 @@ void DispPanel::setBackgroundColor(const PixelColor aColor)
 
 void DispPanel::setTextColor(const PixelColor aColor)
 {
-  TextViewPtr message = boost::dynamic_pointer_cast<TextView>(contents);
+  TextViewPtr message = boost::dynamic_pointer_cast<TextView>(contents->getView("TEXT"));
   if (message) message->setForegroundColor(aColor);
 }
 
 void DispPanel::setTextSpacing(int aSpacing)
 {
-  TextViewPtr message = boost::dynamic_pointer_cast<TextView>(contents);
+  TextViewPtr message = boost::dynamic_pointer_cast<TextView>(contents->getView("TEXT"));
   if (message) message->setTextSpacing(aSpacing);
 }
 
 
 
-#define DEFAULT_CONTENTS_CFG "{ 'type':'text', 'x':0, 'y':0, 'dx':2000, 'dy':7, 'text':'', 'wrapmode':3 }"
+#define DEFAULT_CONTENTS_CFG "{ 'type':'text', 'label':'TEXT', 'x':0, 'y':0, 'sizetocontent':true, 'wrapmode':3 }"
 
 void DispPanel::setText(const string aText)
 {
@@ -162,7 +162,7 @@ void DispPanel::setText(const string aText)
       dispView->setOffsetX(ox);
     }
     // now we can set new text (and content size)
-    TextViewPtr message = boost::dynamic_pointer_cast<TextView>(contents);
+    TextViewPtr message = boost::dynamic_pointer_cast<TextView>(contents->getView("TEXT"));
     if (message) message->setText(aText);
   }
 }
@@ -323,11 +323,11 @@ ErrorPtr DispMatrix::processRequest(ApiRequestPtr aRequest)
       return Error::ok();
     }
     else if (cmd=="startscroll") {
-      double stepx = 0.25;
+      double stepx = 1;
       double stepy = 0;
       long steps = -1; // forever
       bool roundoffsets = true;
-      MLMicroSeconds interval = 20*MilliSecond;
+      MLMicroSeconds interval = 22*MilliSecond;
       MLMicroSeconds start = Never; // right away
       if (data->get("stepx", o, true)) {
         stepx = o->doubleValue();
