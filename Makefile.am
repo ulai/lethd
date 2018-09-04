@@ -123,6 +123,8 @@ lethd_SOURCES = \
   src/view.hpp \
   src/textview.cpp \
   src/textview.hpp \
+  src/imageview.cpp \
+  src/imageview.hpp \
   src/viewscroller.cpp \
   src/viewscroller.hpp \
   src/viewstack.cpp \
