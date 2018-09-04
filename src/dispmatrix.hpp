@@ -44,8 +44,8 @@ namespace p44 {
     int borderLeft; ///< number of hidden LEDs at near (connector) end
     int orientation; ///< orientation of content
 
-    ViewScrollerPtr dispView;
-    TextViewPtr message;
+    ViewScrollerPtr dispView; ///< the scroll view showing part of the contents
+    ViewPtr contents; ///< the view containing the contents
 
     MLMicroSeconds lastUpdate;
 
@@ -61,8 +61,12 @@ namespace p44 {
 
     void setOffsetX(double aOffsetX);
     void setText(const string aText);
+    ErrorPtr loadScene(const string aSceneName);
     void updateDisplay();
 
+    void setBackGroundColor(const PixelColor aColor);
+    void setTextColor(const PixelColor aColor);
+    void setTextSpacing(int aSpacing);
   };
   typedef boost::intrusive_ptr<DispPanel> DispPanelPtr;
 

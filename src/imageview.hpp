@@ -49,6 +49,11 @@ namespace p44 {
     /// load PNG image
     ErrorPtr loadPNG(const string aPNGFileName);
 
+    #if ENABLE_VIEWCONFIG
+    /// configure view from JSON
+    virtual ErrorPtr configureView(JsonObjectPtr aViewConfig) P44_OVERRIDE;
+    #endif
+
   protected:
 
     /// get content color at X,Y

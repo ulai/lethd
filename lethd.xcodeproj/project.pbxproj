@@ -49,6 +49,8 @@
 		ED7108F1210E106700A9B57C /* viewanimator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED7108EB210E106700A9B57C /* viewanimator.cpp */; };
 		ED7108F2210E106700A9B57C /* textview.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED7108ED210E106700A9B57C /* textview.cpp */; };
 		ED7108F3210E106700A9B57C /* viewstack.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED7108EE210E106700A9B57C /* viewstack.cpp */; };
+		EDA91F19213DC15B00136117 /* viewfactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EDA91F18213DC15B00136117 /* viewfactory.cpp */; };
+		EDA91F1A213DCAB000136117 /* imageview.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED50D72D211F522B006D75A6 /* imageview.cpp */; };
 		EDAF7FEC2135348B007C3467 /* light.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EDAF7FEA2135348B007C3467 /* light.cpp */; };
 		EDEEF1C52128377F0042FC98 /* macaddress.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EDEEF1C32128377F0042FC98 /* macaddress.cpp */; };
 /* End PBXBuildFile section */
@@ -159,6 +161,8 @@
 		ED7108ED210E106700A9B57C /* textview.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = textview.cpp; sourceTree = "<group>"; };
 		ED7108EE210E106700A9B57C /* viewstack.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = viewstack.cpp; sourceTree = "<group>"; };
 		ED7108EF210E106700A9B57C /* viewanimator.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = viewanimator.hpp; sourceTree = "<group>"; };
+		EDA91F17213DC15A00136117 /* viewfactory.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = viewfactory.hpp; sourceTree = "<group>"; };
+		EDA91F18213DC15B00136117 /* viewfactory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = viewfactory.cpp; sourceTree = "<group>"; };
 		EDAF7FEA2135348B007C3467 /* light.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = light.cpp; sourceTree = "<group>"; };
 		EDAF7FEB2135348B007C3467 /* light.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = light.hpp; sourceTree = "<group>"; };
 		EDBB9DAB1F435BD600765F95 /* Makefile.am */ = {isa = PBXFileReference; lastKnownFileType = text; path = Makefile.am; sourceTree = "<group>"; };
@@ -217,6 +221,8 @@
 				ED5372661DFC2C6D0066FF5A /* p44utils */,
 				ED7108ED210E106700A9B57C /* textview.cpp */,
 				ED7108EA210E106700A9B57C /* textview.hpp */,
+				EDA91F18213DC15B00136117 /* viewfactory.cpp */,
+				EDA91F17213DC15A00136117 /* viewfactory.hpp */,
 				ED7108E9210E106600A9B57C /* view.cpp */,
 				ED7108E8210E106600A9B57C /* view.hpp */,
 				ED50D72A211F4914006D75A6 /* viewscroller.cpp */,
@@ -403,6 +409,7 @@
 				ED19DD1220F797DA0012DE7E /* civetweb.c in Sources */,
 				ED5372AE1DFC2CBE0066FF5A /* serialcomm.cpp in Sources */,
 				ED53729B1DFC2CBE0066FF5A /* application.cpp in Sources */,
+				EDA91F1A213DCAB000136117 /* imageview.cpp in Sources */,
 				ED7108F1210E106700A9B57C /* viewanimator.cpp in Sources */,
 				ED5372AC1DFC2CBE0066FF5A /* p44obj.cpp in Sources */,
 				ED5372B31DFC2CBE0066FF5A /* utils.cpp in Sources */,
@@ -438,6 +445,7 @@
 				ED7108F2210E106700A9B57C /* textview.cpp in Sources */,
 				ED7108F0210E106700A9B57C /* view.cpp in Sources */,
 				ED34E4032125598B006F286C /* feature.cpp in Sources */,
+				EDA91F19213DC15B00136117 /* viewfactory.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -491,7 +499,10 @@
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = "-ljson-c";
+				OTHER_LDFLAGS = (
+					"-ljson-c",
+					"-lpng",
+				);
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -536,7 +547,10 @@
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
-				OTHER_LDFLAGS = "-ljson-c";
+				OTHER_LDFLAGS = (
+					"-ljson-c",
+					"-lpng",
+				);
 				SDKROOT = macosx;
 			};
 			name = Release;

@@ -22,6 +22,7 @@
 #include "dispmatrix.hpp"
 #include "application.hpp"
 
+#include "viewfactory.hpp"
 
 #define LED_MODULE_COLS 74
 #define LED_MODULE_ROWS 7
@@ -46,17 +47,13 @@ DispPanel::DispPanel(const string aChainName, int aOffsetX, int aRows, int aCols
   // create chain driver
   chain = LEDChainCommPtr(new LEDChainComm(LEDChainComm::ledtype_ws281x, aChainName, rows*cols, cols, false, true));
   chain->begin();
-  // create views
-  message = TextViewPtr(new TextView);
-  message->setFrame(0, 0, 2000, 7);
-  message->setBackGroundColor(transparent);
-  message->setWrapMode(View::wrapX);
+  // the scroller
   dispView = ViewScrollerPtr(new ViewScroller);
   dispView->setFrame(0, 0, cols-borderLeft-borderRight, rows);
   dispView->setFullFrameContent();
   dispView->setOrientation(orientation);
   dispView->setBackGroundColor(black); // not transparent!
-  dispView->setScrolledView(message);
+  // the contents will be created via setText or loadScene
   // position main view
   dispView->setOffsetX(offsetX);
   LOG(LOG_NOTICE, "- created panel with %d cols total (%d visible), %d rows, at offsetX %d, orientation %d, border left %d, right %d", cols, cols-borderLeft-borderRight, rows, offsetX, orientation, borderLeft, borderRight);
@@ -126,23 +123,75 @@ void DispPanel::setOffsetX(double aOffsetX)
   if (dispView) dispView->setOffsetX(aOffsetX+offsetX);
 }
 
+void DispPanel::setBackGroundColor(const PixelColor aColor)
+{
+  if (contents) contents->setBackGroundColor(aColor);
+}
+
+void DispPanel::setTextColor(const PixelColor aColor)
+{
+  TextViewPtr message = boost::dynamic_pointer_cast<TextView>(contents);
+  if (message) message->setTextColor(aColor);
+}
+
+void DispPanel::setTextSpacing(int aSpacing)
+{
+  TextViewPtr message = boost::dynamic_pointer_cast<TextView>(contents);
+  if (message) message->setTextSpacing(aSpacing);
+}
+
+
+
+#define DEFAULT_CONTENTS_CFG "{ 'type':'text', 'x':0, 'y':0, 'dx':2000, 'dy':7, 'text':'', 'wrapmode':3 }"
 
 void DispPanel::setText(const string aText)
 {
   if (dispView) {
-    // due to offset wraparound according to scrolled view's content size (~=text length)
-    // current offset might be smaller than panel's offsetX right now. This must be
-    // adjusted BEFORE content size changes
-    double ox = dispView->getOffsetX();
-    double cx = dispView->getScrolledView()->getContentSizeX();
-    while (cx>0 && ox<offsetX) ox += cx;
-    dispView->setOffsetX(ox);
+    if (!contents) {
+      // no content yet, create text as default
+      p44::createViewFromConfig(JsonObject::objFromText(DEFAULT_CONTENTS_CFG), contents);
+      dispView->setScrolledView(contents);
+    }
+    if (contents) {
+      // due to offset wraparound according to scrolled view's content size (~=text length)
+      // current offset might be smaller than panel's offsetX right now. This must be
+      // adjusted BEFORE content size changes
+      double ox = dispView->getOffsetX();
+      double cx = contents->getContentSizeX();
+      while (cx>0 && ox<offsetX) ox += cx;
+      dispView->setOffsetX(ox);
+    }
     // now we can set new text (and content size)
+    TextViewPtr message = boost::dynamic_pointer_cast<TextView>(contents);
     if (message) message->setText(aText);
   }
 }
 
 
+ErrorPtr DispPanel::loadScene(const string aSceneName)
+{
+  ErrorPtr err;
+  if (dispView) {
+    if (contents) {
+      // due to offset wraparound according to scrolled view's content size (~=text length)
+      // current offset might be smaller than panel's offsetX right now. This must be
+      // adjusted BEFORE content size changes
+      double ox = dispView->getOffsetX();
+      double cx = contents->getContentSizeX();
+      while (cx>0 && ox<offsetX) ox += cx;
+      dispView->setOffsetX(ox);
+      contents.reset();
+      dispView->setScrolledView(contents);
+    }
+    // get new contents view hierarchy
+    JsonObjectPtr sceneCfg = JsonObject::objFromFile(Application::sharedApplication()->resourcePath(aSceneName).c_str(), &err);
+    if (!Error::isOK(err)) return err;
+    err = p44::createViewFromConfig(sceneCfg, contents);
+    if (!Error::isOK(err)) return err;
+    dispView->setScrolledView(contents);
+  }
+  return err;
+}
 
 
 // MARK: ===== DispMatrix
@@ -247,10 +296,12 @@ ErrorPtr DispMatrix::initialize(JsonObjectPtr aInitData)
 #define MIN_SCROLL_STEP_INTERVAL (20*MilliSecond)
 
 #define FOR_EACH_PANEL(m) for(int i=0; i<usedPanels; ++i) { panels[i]->m; }
+#define FOR_EACH_PANEL_WITH_ERR(m,e) for(int i=0; i<usedPanels; ++i) { e = panels[i]->m; if (!Error::isOK(e)) break; }
 
 
 ErrorPtr DispMatrix::processRequest(ApiRequestPtr aRequest)
 {
+  ErrorPtr err;
   JsonObjectPtr data = aRequest->getRequest();
   JsonObjectPtr o = data->get("cmd");
   if (o) {
@@ -317,17 +368,21 @@ ErrorPtr DispMatrix::processRequest(ApiRequestPtr aRequest)
       string msg = o->stringValue();
       FOR_EACH_PANEL(setText(msg));
     }
+    if (data->get("scene", o, true)) {
+      string scene = o->stringValue();
+      FOR_EACH_PANEL_WITH_ERR(loadScene(scene), err);
+    }
     if (data->get("color", o, true)) {
       PixelColor p = webColorToPixel(o->stringValue());
-      FOR_EACH_PANEL(message->setTextColor(p));
+      FOR_EACH_PANEL(setTextColor(p));
     }
     if (data->get("backgroundcolor", o, true)) {
       PixelColor p = webColorToPixel(o->stringValue());
-      FOR_EACH_PANEL(message->setBackGroundColor(p));
+      FOR_EACH_PANEL(setBackGroundColor(p));
     }
     if (data->get("spacing", o, true)) {
       int spacing = o->int32Value();
-      FOR_EACH_PANEL(message->setTextSpacing(spacing));
+      FOR_EACH_PANEL(setTextSpacing(spacing));
     }
     if (data->get("offsetx", o, true)) {
       double offs = o->doubleValue();
@@ -337,7 +392,7 @@ ErrorPtr DispMatrix::processRequest(ApiRequestPtr aRequest)
       double offs = o->doubleValue();
       FOR_EACH_PANEL(dispView->setOffsetY(offs));
     }
-    return Error::ok();
+    return err ? err : Error::ok();
   }
 }
 
@@ -348,11 +403,16 @@ JsonObjectPtr DispMatrix::status()
   if (answer->isType(json_type_object)) {
     if (usedPanels>0) {
       DispPanelPtr p = panels[0];
-      if (p->message) {
-        answer->add("text", JsonObject::newString(p->message->getText()));
-        answer->add("color", JsonObject::newString(pixelToWebColor(p->message->getTextColor())));
-        answer->add("spacing", JsonObject::newInt32(p->message->getTextSpacing()));
-        answer->add("backgroundcolor", JsonObject::newString(pixelToWebColor(p->message->getBackGroundColor())));
+      ViewPtr contents = p->contents;
+      if (contents) {
+        answer->add("backgroundcolor", JsonObject::newString(pixelToWebColor(contents->getBackGroundColor())));
+        answer->add("alpha", JsonObject::newInt32(contents->getAlpha()));
+        TextViewPtr message = boost::dynamic_pointer_cast<TextView>(contents);
+        if (message) {
+          answer->add("text", JsonObject::newString(message->getText()));
+          answer->add("color", JsonObject::newString(pixelToWebColor(message->getTextColor())));
+          answer->add("spacing", JsonObject::newInt32(message->getTextSpacing()));
+        }
       }
       if (p->dispView) {
         answer->add("brightness", JsonObject::newDouble((double)p->dispView->getAlpha()/255));

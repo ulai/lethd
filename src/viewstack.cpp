@@ -21,6 +21,11 @@
 
 #include "viewstack.hpp"
 
+#if ENABLE_VIEWCONFIG
+  #include "viewfactory.hpp"
+#endif
+
+
 using namespace p44;
 
 
@@ -138,3 +143,33 @@ PixelColor ViewStack::contentColorAt(int aX, int aY)
     return pc;
   }
 }
+
+
+#if ENABLE_VIEWCONFIG
+
+// MARK: ===== view configuration
+
+ErrorPtr ViewStack::configureView(JsonObjectPtr aViewConfig)
+{
+  ErrorPtr err = inherited::configureView(aViewConfig);
+  if (Error::isOK(err)) {
+    JsonObjectPtr o;
+    if (aViewConfig->get("layers", o)) {
+      for (int i=0; i<o->arrayLength(); ++i) {
+        JsonObjectPtr l = o->arrayGet(i);
+        JsonObjectPtr o2;
+        ViewPtr layerView;
+        if (l->get("view", o2)) {
+          err = p44::createViewFromConfig(o2, layerView);
+          if (Error::isOK(err)) {
+            pushView(layerView);
+          }
+        }
+      }
+    }
+  }
+  return err;
+}
+
+#endif // ENABLE_VIEWCONFIG
+

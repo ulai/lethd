@@ -21,6 +21,12 @@
 
 #include "imageview.hpp"
 
+#if ENABLE_VIEWCONFIG
+  #include "application.hpp"
+#endif
+
+
+
 using namespace p44;
 
 // MARK: ===== ImageView
@@ -112,4 +118,24 @@ PixelColor ImageView::contentColorAt(int aX, int aY)
     return pc;
   }
 }
+
+
+#if ENABLE_VIEWCONFIG
+
+// MARK: ===== view configuration
+
+ErrorPtr ImageView::configureView(JsonObjectPtr aViewConfig)
+{
+  ErrorPtr err = inherited::configureView(aViewConfig);
+  if (Error::isOK(err)) {
+    JsonObjectPtr o;
+    if (aViewConfig->get("file", o)) {
+      err = loadPNG(Application::sharedApplication()->resourcePath(o->stringValue()));
+    }
+  }
+  return err;
+}
+
+#endif // ENABLE_VIEWCONFIG
+
 

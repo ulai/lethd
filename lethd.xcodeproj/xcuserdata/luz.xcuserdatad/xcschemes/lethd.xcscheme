@@ -67,6 +67,10 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "--resourcepath /Volumes/CaseSens/openwrt/feeds/plan44/leth-config/files/resources"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "--jsonapiipv6"
             isEnabled = "NO">
          </CommandLineArgument>
@@ -91,8 +95,8 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--dispmatrix 20,10"
-            isEnabled = "NO">
+            argument = "--dispmatrix 74,7"
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--button sim.button --redled sim.redled --greenled sim.greenled"

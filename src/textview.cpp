@@ -873,3 +873,30 @@ PixelColor TextView::contentColorAt(int aX, int aY)
   }
 }
 
+
+#if ENABLE_VIEWCONFIG
+
+// MARK: ===== view configuration
+
+ErrorPtr TextView::configureView(JsonObjectPtr aViewConfig)
+{
+  ErrorPtr err = inherited::configureView(aViewConfig);
+  if (Error::isOK(err)) {
+    JsonObjectPtr o;
+    if (aViewConfig->get("text", o)) {
+      setText(o->stringValue());
+    }
+    if (aViewConfig->get("textcolor", o)) {
+      setTextColor(webColorToPixel(o->stringValue()));
+    }
+    if (aViewConfig->get("spacing", o)) {
+      setTextSpacing(o->int32Value());
+    }
+  }
+  return err;
+}
+
+#endif // ENABLE_VIEWCONFIG
+
+
+

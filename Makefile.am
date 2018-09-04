@@ -33,6 +33,7 @@ lethd_CXXFLAGS = \
   ${JSONC_CFLAGS} \
   ${PTHREAD_CFLAGS} \
   ${SQLITE3_CFLAGS} \
+  ${PNG_CFLAGS} \
   ${lethd_PLATFORM} \
   ${lethd_DEBUG}
 
@@ -116,6 +117,8 @@ lethd_SOURCES = \
   src/p44utils/thirdparty/civetweb/hostcheck.inl \
   src/p44utils/thirdparty/civetweb/openssl_hostname_validation.inl \
   src/p44utils/p44utils_common.hpp \
+  src/viewfactory.cpp \
+  src/viewfactory.hpp \
   src/view.cpp \
   src/view.hpp \
   src/textview.cpp \

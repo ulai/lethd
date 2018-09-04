@@ -398,5 +398,59 @@ string p44::pixelToWebColor(const PixelColor aPixelColor)
 }
 
 
+#if ENABLE_VIEWCONFIG
+
+// MARK: ===== view configuration
+
+ErrorPtr View::configureView(JsonObjectPtr aViewConfig)
+{
+  JsonObjectPtr o;
+  if (aViewConfig->get("clear", o)) {
+    if(o->boolValue()) clear();
+  }
+  if (aViewConfig->get("x", o)) {
+    originX = o->int32Value(); makeDirty();
+  }
+  if (aViewConfig->get("y", o)) {
+    originY = o->int32Value(); makeDirty();
+  }
+  if (aViewConfig->get("dx", o)) {
+    dX = o->int32Value(); makeDirty();
+  }
+  if (aViewConfig->get("dy", o)) {
+    dY = o->int32Value(); makeDirty();
+  }
+  if (aViewConfig->get("bgcolor", o)) {
+    backgroundColor = webColorToPixel(o->stringValue()); makeDirty();
+  }
+  if (aViewConfig->get("alpha", o)) {
+    setAlpha(o->int32Value());
+  }
+  if (aViewConfig->get("wrapmode", o)) {
+    setWrapMode(o->int32Value());
+  }
+  if (aViewConfig->get("content_x", o)) {
+    offsetX = o->int32Value(); makeDirty();
+  }
+  if (aViewConfig->get("content_y", o)) {
+    offsetY = o->int32Value(); makeDirty();
+  }
+  if (aViewConfig->get("content_dx", o)) {
+    contentSizeX = o->int32Value(); makeDirty();
+  }
+  if (aViewConfig->get("content_dy", o)) {
+    contentSizeY = o->int32Value(); makeDirty();
+  }
+  if (aViewConfig->get("orientation", o)) {
+    setOrientation(o->int32Value());
+  }
+  if (aViewConfig->get("fullframe", o)) {
+    if(o->boolValue()) setFullFrameContent();
+  }
+  return ErrorPtr();
+}
+
+#endif // ENABLE_VIEWCONFIG
+
 
 

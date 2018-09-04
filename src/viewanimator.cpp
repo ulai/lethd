@@ -21,6 +21,10 @@
 
 #include "viewanimator.hpp"
 
+#if ENABLE_VIEWCONFIG
+  #include "viewfactory.hpp"
+#endif
+
 using namespace p44;
 
 
@@ -96,6 +100,7 @@ MLMicroSeconds ViewAnimator::stepAnimation()
         // initiate animation
         // - set current view
         currentView = as.view;
+        makeDirty();
         if (as.fadeInTime>0) {
           currentView->setAlpha(0);
           currentView->fadeTo(255, as.fadeInTime);
@@ -191,3 +196,55 @@ PixelColor ViewAnimator::contentColorAt(int aX, int aY)
     return currentView->colorAt(aX, aY);
   }
 }
+
+
+#if ENABLE_VIEWCONFIG
+
+// MARK: ===== view configuration
+
+ErrorPtr ViewAnimator::configureView(JsonObjectPtr aViewConfig)
+{
+  ErrorPtr err = inherited::configureView(aViewConfig);
+  if (Error::isOK(err)) {
+    JsonObjectPtr o;
+    if (aViewConfig->get("steps", o)) {
+      for (int i=0; i<o->arrayLength(); ++i) {
+        JsonObjectPtr s = o->arrayGet(i);
+        JsonObjectPtr o2;
+        ViewPtr stepView;
+        MLMicroSeconds showTime = 500*MilliSecond;
+        MLMicroSeconds fadeInTime = 0;
+        MLMicroSeconds fadeOutTime = 0;
+        if (s->get("view", o2)) {
+          err = p44::createViewFromConfig(o2, stepView);
+          if (Error::isOK(err)) {
+            if (s->get("showtime", o2)) {
+              showTime = o2->int32Value()*MilliSecond;
+            }
+            if (s->get("fadeintime", o2)) {
+              fadeInTime = o2->int32Value()*MilliSecond;
+            }
+            if (s->get("fadeouttime", o2)) {
+              fadeOutTime = o2->int32Value()*MilliSecond;
+            }
+            pushStep(stepView, showTime, fadeInTime, fadeOutTime);
+          }
+        }
+      }
+    }
+    bool doStart = true;
+    bool doRepeat = false;
+    if (aViewConfig->get("start", o)) {
+      doStart = o->boolValue();
+    }
+    if (aViewConfig->get("repeat", o)) {
+      doRepeat = o->boolValue();
+    }
+    if (doStart) startAnimation(doRepeat);
+  }
+  return err;
+}
+
+#endif // ENABLE_VIEWCONFIG
+
+

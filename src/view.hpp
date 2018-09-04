@@ -24,6 +24,14 @@
 
 #include "p44utils_common.hpp"
 
+#ifndef ENABLE_VIEWCONFIG
+  #define ENABLE_VIEWCONFIG 1
+#endif
+
+#if ENABLE_VIEWCONFIG
+  #include "jsonobject.hpp"
+#endif
+
 namespace p44 {
 
 
@@ -284,6 +292,11 @@ namespace p44 {
 
     /// call when display is updated
     virtual void updated() { dirty = false; };
+
+    #if ENABLE_VIEWCONFIG
+    /// configure view from JSON
+    virtual ErrorPtr configureView(JsonObjectPtr aViewConfig);
+    #endif
 
   };
   typedef boost::intrusive_ptr<View> ViewPtr;

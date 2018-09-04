@@ -129,6 +129,11 @@ namespace p44 {
     /// call when display is updated
     virtual void updated() P44_OVERRIDE;
 
+    #if ENABLE_VIEWCONFIG
+    /// configure view from JSON
+    virtual ErrorPtr configureView(JsonObjectPtr aViewConfig);
+    #endif
+
   };
   typedef boost::intrusive_ptr<ViewScroller> ViewScrollerPtr;
 

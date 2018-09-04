@@ -68,6 +68,11 @@ namespace p44 {
     /// clear contents of this view
     virtual void clear() P44_OVERRIDE;
 
+    #if ENABLE_VIEWCONFIG
+    /// configure view from JSON
+    virtual ErrorPtr configureView(JsonObjectPtr aViewConfig) P44_OVERRIDE;
+    #endif
+
   protected:
 
     /// get content color at X,Y

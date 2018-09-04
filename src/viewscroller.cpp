@@ -21,6 +21,10 @@
 
 #include "viewscroller.hpp"
 
+#if ENABLE_VIEWCONFIG
+  #include "viewfactory.hpp"
+#endif
+
 using namespace p44;
 
 
@@ -69,7 +73,9 @@ MLMicroSeconds ViewScroller::step()
     MLMicroSeconds now = MainLoop::now();
     MLMicroSeconds next = nextScrollStepAt-now; // time to next step
     if (next>0) {
-      nextCall = nextScrollStepAt;
+      if (nextCall<0 || nextScrollStepAt<nextCall) {
+        nextCall = nextScrollStepAt;
+      }
     }
     else {
       // execute all step(s) pending
@@ -117,7 +123,9 @@ MLMicroSeconds ViewScroller::step()
         // advance to next step
         next += scrollStepInterval;
         nextScrollStepAt += scrollStepInterval;
-        nextCall = nextScrollStepAt;
+        if (nextCall<0 || nextScrollStepAt<nextCall) {
+          nextCall = nextScrollStepAt;
+        }
         if (next<0) {
           LOG(LOG_INFO, "ViewScroller: needs to catch-up steps -> call step() more often!");
         }
@@ -200,4 +208,60 @@ void ViewScroller::stopScroll()
   // no more steps
   scrollSteps = 0;
 }
+
+
+#if ENABLE_VIEWCONFIG
+
+// MARK: ===== view configuration
+
+ErrorPtr ViewScroller::configureView(JsonObjectPtr aViewConfig)
+{
+  ErrorPtr err = inherited::configureView(aViewConfig);
+  if (Error::isOK(err)) {
+    JsonObjectPtr o;
+    // view
+    if (aViewConfig->get("scrolledview", o)) {
+      err = p44::createViewFromConfig(o, scrolledView);
+      makeDirty();
+    }
+    // offsets
+    if (aViewConfig->get("offsetx", o)) {
+      setOffsetX(o->doubleValue());
+    }
+    if (aViewConfig->get("offsety", o)) {
+      setOffsetY(o->doubleValue());
+    }
+    // scroll
+    double stepX = 0;
+    double stepY = 0;
+    MLMicroSeconds interval = 50*MilliSecond;
+    long numSteps = -1;
+    bool doStart = false;
+    if (aViewConfig->get("stepx", o)) {
+      stepX = o->doubleValue();
+      doStart = true;
+    }
+    if (aViewConfig->get("stepy", o)) {
+      stepY = o->doubleValue();
+      doStart = true;
+    }
+    if (aViewConfig->get("interval", o)) {
+      interval = o->int32Value()*MilliSecond;
+      doStart = true;
+    }
+    if (aViewConfig->get("steps", o)) {
+      numSteps = o->int32Value();
+      if (numSteps==0) stopScroll();
+      else doStart = true;
+    }
+    if (doStart) {
+      startScroll(stepX, stepY, interval, true, numSteps);
+    }
+  }
+  return err;
+}
+
+#endif // ENABLE_VIEWCONFIG
+
+
 
