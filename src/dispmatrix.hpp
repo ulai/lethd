@@ -61,10 +61,11 @@ namespace p44 {
 
     void setOffsetX(double aOffsetX);
     void setText(const string aText);
-    ErrorPtr loadScene(const string aSceneName);
+    ErrorPtr installScene(JsonObjectPtr aSceneConfig);
+    ErrorPtr reconfigure(const string aViewLabel, JsonObjectPtr aConfig);
     void updateDisplay();
 
-    void setBackGroundColor(const PixelColor aColor);
+    void setBackgroundColor(const PixelColor aColor);
     void setTextColor(const PixelColor aColor);
     void setTextSpacing(int aSpacing);
   };

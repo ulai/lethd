@@ -52,7 +52,7 @@ DispPanel::DispPanel(const string aChainName, int aOffsetX, int aRows, int aCols
   dispView->setFrame(0, 0, cols-borderLeft-borderRight, rows);
   dispView->setFullFrameContent();
   dispView->setOrientation(orientation);
-  dispView->setBackGroundColor(black); // not transparent!
+  dispView->setBackgroundColor(black); // not transparent!
   // the contents will be created via setText or loadScene
   // position main view
   dispView->setOffsetX(offsetX);
@@ -123,15 +123,15 @@ void DispPanel::setOffsetX(double aOffsetX)
   if (dispView) dispView->setOffsetX(aOffsetX+offsetX);
 }
 
-void DispPanel::setBackGroundColor(const PixelColor aColor)
+void DispPanel::setBackgroundColor(const PixelColor aColor)
 {
-  if (contents) contents->setBackGroundColor(aColor);
+  if (contents) contents->setBackgroundColor(aColor);
 }
 
 void DispPanel::setTextColor(const PixelColor aColor)
 {
   TextViewPtr message = boost::dynamic_pointer_cast<TextView>(contents);
-  if (message) message->setTextColor(aColor);
+  if (message) message->setForegroundColor(aColor);
 }
 
 void DispPanel::setTextSpacing(int aSpacing)
@@ -168,7 +168,7 @@ void DispPanel::setText(const string aText)
 }
 
 
-ErrorPtr DispPanel::loadScene(const string aSceneName)
+ErrorPtr DispPanel::installScene(JsonObjectPtr aSceneConfig)
 {
   ErrorPtr err;
   if (dispView) {
@@ -184,11 +184,22 @@ ErrorPtr DispPanel::loadScene(const string aSceneName)
       dispView->setScrolledView(contents);
     }
     // get new contents view hierarchy
-    JsonObjectPtr sceneCfg = JsonObject::objFromFile(Application::sharedApplication()->resourcePath(aSceneName).c_str(), &err);
-    if (!Error::isOK(err)) return err;
-    err = p44::createViewFromConfig(sceneCfg, contents);
+    err = p44::createViewFromConfig(aSceneConfig, contents);
     if (!Error::isOK(err)) return err;
     dispView->setScrolledView(contents);
+  }
+  return err;
+}
+
+
+ErrorPtr DispPanel::reconfigure(const string aViewLabel, JsonObjectPtr aConfig)
+{
+  ErrorPtr err;
+  if (dispView) {
+    ViewPtr view = dispView->getView(aViewLabel);
+    if (view) {
+      view->configureView(aConfig);
+    }
   }
   return err;
 }
@@ -360,6 +371,17 @@ ErrorPtr DispMatrix::processRequest(ApiRequestPtr aRequest)
       FOR_EACH_PANEL(dispView->fadeTo(to, t));
       return Error::ok();
     }
+    else if (cmd=="reconfigure") {
+      if (data->get("view", o)) {
+        string viewLabel = o->stringValue();
+        JsonObjectPtr viewConfig = data->get("config");
+        if (viewConfig) {
+          FOR_EACH_PANEL_WITH_ERR(reconfigure(viewLabel, viewConfig), err);
+          return err ? err : Error::ok();
+        }
+      }
+      return TextError::err("missing 'view' and/or 'config'");
+    }
     return inherited::processRequest(aRequest);
   }
   else {
@@ -369,8 +391,13 @@ ErrorPtr DispMatrix::processRequest(ApiRequestPtr aRequest)
       FOR_EACH_PANEL(setText(msg));
     }
     if (data->get("scene", o, true)) {
-      string scene = o->stringValue();
-      FOR_EACH_PANEL_WITH_ERR(loadScene(scene), err);
+      if (o->isType(json_type_string)) {
+        // scene file path, load it
+        string scenePath = o->stringValue();
+        o = JsonObject::objFromFile(Application::sharedApplication()->resourcePath(scenePath).c_str(), &err);
+        if (!Error::isOK(err)) return err;
+      }
+      FOR_EACH_PANEL_WITH_ERR(installScene(o), err);
     }
     if (data->get("color", o, true)) {
       PixelColor p = webColorToPixel(o->stringValue());
@@ -378,7 +405,7 @@ ErrorPtr DispMatrix::processRequest(ApiRequestPtr aRequest)
     }
     if (data->get("backgroundcolor", o, true)) {
       PixelColor p = webColorToPixel(o->stringValue());
-      FOR_EACH_PANEL(setBackGroundColor(p));
+      FOR_EACH_PANEL(setBackgroundColor(p));
     }
     if (data->get("spacing", o, true)) {
       int spacing = o->int32Value();
@@ -405,12 +432,12 @@ JsonObjectPtr DispMatrix::status()
       DispPanelPtr p = panels[0];
       ViewPtr contents = p->contents;
       if (contents) {
-        answer->add("backgroundcolor", JsonObject::newString(pixelToWebColor(contents->getBackGroundColor())));
+        answer->add("backgroundcolor", JsonObject::newString(pixelToWebColor(contents->getBackgroundColor())));
+        answer->add("color", JsonObject::newString(pixelToWebColor(contents->getForegroundColor())));
         answer->add("alpha", JsonObject::newInt32(contents->getAlpha()));
         TextViewPtr message = boost::dynamic_pointer_cast<TextView>(contents);
         if (message) {
           answer->add("text", JsonObject::newString(message->getText()));
-          answer->add("color", JsonObject::newString(pixelToWebColor(message->getTextColor())));
           answer->add("spacing", JsonObject::newInt32(message->getTextSpacing()));
         }
       }
