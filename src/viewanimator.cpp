@@ -245,6 +245,20 @@ ErrorPtr ViewAnimator::configureView(JsonObjectPtr aViewConfig)
   return err;
 }
 
+
+ViewPtr ViewAnimator::getView(const string aLabel)
+{
+  for (SequenceVector::iterator pos = sequence.begin(); pos!=sequence.end(); ++pos) {
+    ViewPtr v = pos->view;
+    if (v) {
+      ViewPtr view = v->getView(aLabel);
+      if (view) return view;
+    }
+  }
+  return inherited::getView(aLabel);
+}
+
+
 #endif // ENABLE_VIEWCONFIG
 
 

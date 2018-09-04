@@ -43,7 +43,10 @@ namespace p44 {
 
     /// push view onto top of stack
     /// @param aView the view to push in front of all other views
-    void pushView(ViewPtr aView);
+    /// @param aPositioning where to append the view relative to the previous view on the stack. Using wrapMode constants,
+    ///   wrapXmax means appending in positive X direction, wrapXmin means in negative X direction, etc.
+    /// @param aSpacing extra pixels between appended views
+    void pushView(ViewPtr aView, WrapMode aPositioning = noWrap, int aSpacing = 0);
 
     /// remove topmost view
     void popView();
@@ -68,8 +71,18 @@ namespace p44 {
     virtual void updated() P44_OVERRIDE;
 
     #if ENABLE_VIEWCONFIG
+
     /// configure view from JSON
+    /// @param aViewConfig JSON for configuring view and subviews
+    /// @return ok or error in case of real errors (image not found etc., but minor
+    ///   issues like unknown properties usually don't cause error)
     virtual ErrorPtr configureView(JsonObjectPtr aViewConfig) P44_OVERRIDE;
+
+    /// get view by label
+    /// @param aLabel label of view to find
+    /// @return NULL if not found, labelled view otherwise (first one with that label found in case >1 have the same label)
+    virtual ViewPtr getView(const string aLabel) P44_OVERRIDE;
+
     #endif
 
 

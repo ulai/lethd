@@ -38,7 +38,8 @@ View::View()
   offsetY = 0;
   contentSizeX = 0;
   contentSizeY = 0;
-  backgroundColor = { .r=0, .g=0, .b=0, .a=0 }; // transparent background...
+  backgroundColor = { .r=0, .g=0, .b=0, .a=0 }; // transparent background,
+  foregroundColor = { .r=255, .g=255, .b=255, .a=255 }; // fully white foreground...
   alpha = 255; // but content pixels passed trough 1:1
   targetAlpha = -1; // not fading
 }
@@ -141,6 +142,19 @@ void View::setFullFrameContent()
   setContentSize(dX, dY);
   setContentOffset(0, 0);
   setOrientation(View::right);
+}
+
+
+void View::sizeFrameToContent()
+{
+  int csx = contentSizeX;
+  int csy = contentSizeY;
+  if (contentOrientation & xy_swap) {
+    swap(csx, csy);
+  }
+  dX = offsetX+csx;
+  dY = offsetY+csy;
+  makeDirty();
 }
 
 
@@ -364,8 +378,8 @@ PixelColor p44::webColorToPixel(const string aWebColor)
 {
   PixelColor res = transparent;
   size_t i = 0;
-  if (i>0 && aWebColor[0]=='#') i++; // skip optional #
-  size_t n = aWebColor.size()-i;
+  size_t n = aWebColor.size();
+  if (n>0 && aWebColor[0]=='#') { i++; n--; } // skip optional #
   uint32_t h;
   if (sscanf(aWebColor.c_str()+i, "%x", &h)==1) {
     if (n<=4) {
@@ -405,6 +419,9 @@ string p44::pixelToWebColor(const PixelColor aPixelColor)
 ErrorPtr View::configureView(JsonObjectPtr aViewConfig)
 {
   JsonObjectPtr o;
+  if (aViewConfig->get("label", o)) {
+    label = o->stringValue();
+  }
   if (aViewConfig->get("clear", o)) {
     if(o->boolValue()) clear();
   }
@@ -422,6 +439,9 @@ ErrorPtr View::configureView(JsonObjectPtr aViewConfig)
   }
   if (aViewConfig->get("bgcolor", o)) {
     backgroundColor = webColorToPixel(o->stringValue()); makeDirty();
+  }
+  if (aViewConfig->get("color", o)) {
+    foregroundColor = webColorToPixel(o->stringValue()); makeDirty();
   }
   if (aViewConfig->get("alpha", o)) {
     setAlpha(o->int32Value());
@@ -447,8 +467,22 @@ ErrorPtr View::configureView(JsonObjectPtr aViewConfig)
   if (aViewConfig->get("fullframe", o)) {
     if(o->boolValue()) setFullFrameContent();
   }
+  if (aViewConfig->get("sizetocontent", o)) {
+    if(o->boolValue()) sizeFrameToContent();
+  }
   return ErrorPtr();
 }
+
+
+ViewPtr View::getView(const string aLabel)
+{
+  if (aLabel==label) {
+    return ViewPtr(this); // that's me
+  }
+  return ViewPtr(); // not found
+}
+
+
 
 #endif // ENABLE_VIEWCONFIG
 

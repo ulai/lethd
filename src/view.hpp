@@ -111,6 +111,8 @@ namespace p44 {
 
   /// @}
 
+  class View;
+  typedef boost::intrusive_ptr<View> ViewPtr;
 
   class View : public P44Obj
   {
@@ -172,8 +174,8 @@ namespace p44 {
     // alpha (opacity)
     uint8_t alpha;
 
-    // background
-    PixelColor backgroundColor;
+    PixelColor backgroundColor; ///< background color
+    PixelColor foregroundColor; ///< foreground color
 
     // content
     int offsetX; ///< content X offset (in view coordinates)
@@ -182,6 +184,11 @@ namespace p44 {
     int contentSizeX; ///< X size of content (in content coordinates)
     int contentSizeY; ///< Y size of content (in content coordinates)
     WrapMode contentWrapMode; ///< content wrap mode
+
+    #if ENABLE_VIEWCONFIG
+    string label; ///< label of the view for addressing it
+    #endif
+
 
     /// get content pixel color
     /// @param aX content X coordinate
@@ -212,10 +219,16 @@ namespace p44 {
 
     /// set the view's background color
     /// @param aBackGroundColor color of pixels not covered by content
-    void setBackGroundColor(PixelColor aBackGroundColor) { backgroundColor = aBackGroundColor; makeDirty(); };
+    void setBackgroundColor(PixelColor aBackgroundColor) { backgroundColor = aBackgroundColor; makeDirty(); };
 
     /// @return current background color
-    PixelColor getBackGroundColor() { return backgroundColor; }
+    PixelColor getBackgroundColor() { return backgroundColor; }
+
+    /// set foreground color
+    void setForegroundColor(PixelColor aColor) { foregroundColor = aColor; makeDirty(); }
+
+    /// get foreground color
+    PixelColor getForegroundColor() const { return foregroundColor; }
 
     /// set content wrap mode
     /// @param aWrapMode the new wrap mode
@@ -269,8 +282,11 @@ namespace p44 {
     int getContentSizeY() const { return contentSizeY; }
 
 
-    /// set content size to full frame content with same coordinates
+    /// set content size to full frame content with same origin and orientation
     void setFullFrameContent();
+
+    /// set frame size to contain all content
+    void sizeFrameToContent();
 
     /// get color at X,Y
     /// @param aX PlayField X coordinate
@@ -294,12 +310,21 @@ namespace p44 {
     virtual void updated() { dirty = false; };
 
     #if ENABLE_VIEWCONFIG
+
     /// configure view from JSON
+    /// @param aViewConfig JSON for configuring view and subviews
+    /// @return ok or error in case of real errors (image not found etc., but minor
+    ///   issues like unknown properties usually don't cause error)
     virtual ErrorPtr configureView(JsonObjectPtr aViewConfig);
+
+    /// get view by label
+    /// @param aLabel label of view to find
+    /// @return NULL if not found, labelled view otherwise (first one with that label found in case >1 have the same label)
+    virtual ViewPtr getView(const string aLabel);
+
     #endif
 
   };
-  typedef boost::intrusive_ptr<View> ViewPtr;
 
 } // namespace p44
 

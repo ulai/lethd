@@ -130,8 +130,18 @@ namespace p44 {
     virtual void updated() P44_OVERRIDE;
 
     #if ENABLE_VIEWCONFIG
+
     /// configure view from JSON
-    virtual ErrorPtr configureView(JsonObjectPtr aViewConfig);
+    /// @param aViewConfig JSON for configuring view and subviews
+    /// @return ok or error in case of real errors (image not found etc., but minor
+    ///   issues like unknown properties usually don't cause error)
+    virtual ErrorPtr configureView(JsonObjectPtr aViewConfig) P44_OVERRIDE;
+
+    /// get view by label
+    /// @param aLabel label of view to find
+    /// @return NULL if not found, labelled view otherwise (first one with that label found in case >1 have the same label)
+    virtual ViewPtr getView(const string aLabel) P44_OVERRIDE;
+
     #endif
 
   };

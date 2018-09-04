@@ -32,9 +32,6 @@ namespace p44 {
   {
     typedef View inherited;
 
-    // text parameters
-    PixelColor textColor;
-
     // text rendering
     string text; ///< internal representation of text
     int textSpacing; ///< pixels between characters
@@ -53,13 +50,7 @@ namespace p44 {
     /// get current text
     string getText() const { return text; }
 
-    /// set new text color
-    void setTextColor(PixelColor aTextColor) { textColor = aTextColor; makeDirty(); }
-
-    /// get text color
-    PixelColor getTextColor() const { return textColor; }
-
-    /// set new text color
+    /// set character spacing
     void setTextSpacing(int aTextSpacing) { textSpacing = aTextSpacing; renderText(); }
 
     /// get text color

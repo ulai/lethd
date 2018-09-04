@@ -780,10 +780,6 @@ TextView::TextView()
   exit(1);
   #endif
   textSpacing = 2;
-  textColor.r = 255;
-  textColor.g = 255;
-  textColor.b = 255;
-  textColor.a = 255;
 }
 
 
@@ -862,7 +858,7 @@ PixelColor TextView::contentColorAt(int aX, int aY)
   if (isInContentSize(aX, aY)) {
     uint8_t col = textPixelCols[aX];
     if (col & (1<<(rowsPerGlyph-1-aY))) {
-      return textColor;
+      return foregroundColor;
     }
     else {
       return inherited::contentColorAt(aX, aY);;
@@ -880,20 +876,16 @@ PixelColor TextView::contentColorAt(int aX, int aY)
 
 ErrorPtr TextView::configureView(JsonObjectPtr aViewConfig)
 {
-  ErrorPtr err = inherited::configureView(aViewConfig);
-  if (Error::isOK(err)) {
-    JsonObjectPtr o;
-    if (aViewConfig->get("text", o)) {
-      setText(o->stringValue());
-    }
-    if (aViewConfig->get("textcolor", o)) {
-      setTextColor(webColorToPixel(o->stringValue()));
-    }
-    if (aViewConfig->get("spacing", o)) {
-      setTextSpacing(o->int32Value());
-    }
+  // text properties (size...) must be known before configuring base view
+  JsonObjectPtr o;
+  if (aViewConfig->get("text", o)) {
+    setText(o->stringValue());
   }
-  return err;
+  if (aViewConfig->get("spacing", o)) {
+    setTextSpacing(o->int32Value());
+  }
+  // now let base view configure itself
+  return inherited::configureView(aViewConfig);
 }
 
 #endif // ENABLE_VIEWCONFIG

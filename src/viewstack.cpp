@@ -41,9 +41,41 @@ ViewStack::~ViewStack()
 }
 
 
-void ViewStack::pushView(ViewPtr aView)
+void ViewStack::pushView(ViewPtr aView, WrapMode aPositioning, int aSpacing)
 {
+  // auto-positioning?
+  if (aPositioning && !viewStack.empty()) {
+    ViewPtr refView = viewStack.back();
+    // X auto positioning
+    if (aPositioning&wrapXmax) {
+      aView->originX = refView->originX+refView->dX+aSpacing;
+    }
+    else if (aPositioning&wrapXmin) {
+      aView->originX = refView->originX-aView->dX-aSpacing;
+    }
+    // Y auto positioning
+    if (aPositioning&wrapYmax) {
+      aView->originY = refView->originY+refView->dY+aSpacing;
+    }
+    else if (aPositioning&wrapYmin) {
+      aView->originY = refView->originY-aView->dY-aSpacing;
+    }
+  }
   viewStack.push_back(aView);
+  // recalculate my own content size
+  int minX = INT_MAX;
+  int maxX = INT_MIN;
+  int minY = INT_MAX;
+  int maxY = INT_MIN;
+  for (ViewsList::iterator pos = viewStack.begin(); pos!=viewStack.end(); ++pos) {
+    ViewPtr v = *pos;
+    if (v->originX<minX) minX = v->originX;
+    if (v->originY<minY) minY = v->originY;
+    if (v->originX+v->dX>maxX) maxX = v->originX+v->dX;
+    if (v->originY+v->dY>maxY) maxY = v->originY+v->dY;
+  }
+  contentSizeX = maxX-minX+aSpacing; if (contentSizeX<0) contentSizeX = 0;
+  contentSizeY = maxY-minY+aSpacing; if (contentSizeY<0) contentSizeY = 0;
   makeDirty();
 }
 
@@ -162,7 +194,15 @@ ErrorPtr ViewStack::configureView(JsonObjectPtr aViewConfig)
         if (l->get("view", o2)) {
           err = p44::createViewFromConfig(o2, layerView);
           if (Error::isOK(err)) {
-            pushView(layerView);
+            WrapMode pos = noWrap;
+            int spacing = 0;
+            if (l->get("positioning", o2)) {
+              pos = (WrapMode)o2->int32Value();
+              if (l->get("spacing", o2)) {
+                spacing = o2->int32Value();
+              }
+            }
+            pushView(layerView, pos, spacing);
           }
         }
       }
@@ -170,6 +210,20 @@ ErrorPtr ViewStack::configureView(JsonObjectPtr aViewConfig)
   }
   return err;
 }
+
+
+ViewPtr ViewStack::getView(const string aLabel)
+{
+  for (ViewsList::iterator pos = viewStack.begin(); pos!=viewStack.end(); ++pos) {
+    if (*pos) {
+      ViewPtr view = (*pos)->getView(aLabel);
+      if (view) return view;
+    }
+  }
+  return inherited::getView(aLabel);
+}
+
+
 
 #endif // ENABLE_VIEWCONFIG
 
