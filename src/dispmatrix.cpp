@@ -77,44 +77,60 @@ DispPanel::~DispPanel()
 
 
 
-#define MAX_STEP_INTERVAL (20*MilliSecond)
-#define MAX_UPDATE_INTERVAL (100*MilliSecond)
+#define MAX_STEP_INTERVAL (1000*MilliSecond) // run a step at least once a second
+#define MAX_UPDATE_INTERVAL (500*MilliSecond) // send an update at least every half second
+#define MIN_UPDATE_INTERVAL (15*MilliSecond) // do not send updates faster than every 15ms
+
 
 MLMicroSeconds DispPanel::step()
 {
   MLMicroSeconds nextCall = Infinite;
   if (dispView) {
     do {
-      nextCall = dispView->step();
+      nextCall = dispView->step(lastUpdate+3*MIN_UPDATE_INTERVAL);
     } while (nextCall==0);
-    updateDisplay();
+    MLMicroSeconds n = updateDisplay();
+    if (nextCall<0 || (n>0 && n<nextCall)) {
+      nextCall = n;
+    }
   }
   return nextCall;
 }
 
 
-void DispPanel::updateDisplay()
+MLMicroSeconds DispPanel::updateDisplay()
 {
+  MLMicroSeconds now = MainLoop::now();
   if (dispView) {
     bool dirty = dispView->isDirty();
-    MLMicroSeconds now = MainLoop::now();
     if (dirty || now>lastUpdate+MAX_UPDATE_INTERVAL) {
-      lastUpdate = now;
-      if (dirty) {
-        // update LED chain content buffer
-        for (int x=borderRight; x<cols-borderLeft; x++) {
-          for (int y=0; y<rows; y++) {
-            PixelColor p = dispView->colorAt(x-borderRight, y);
-            PixelColor dp = dimmedPixel(p, p.a);
-            chain->setColorXY(x, y, dp.r, dp.g, dp.b);
-          }
-        }
-        dispView->updated();
+      // needs update
+      if (now<lastUpdate+MIN_UPDATE_INTERVAL) {
+        // cannot update noew, but we should update soon
+        return lastUpdate+MIN_UPDATE_INTERVAL;
       }
-      // update hardware (refresh actual LEDs, cleans away possible glitches
-      chain->show();
+      else
+      {
+        // update now
+        lastUpdate = now;
+        if (dirty) {
+          // update LED chain content buffer
+          for (int x=borderRight; x<cols-borderLeft; x++) {
+            for (int y=0; y<rows; y++) {
+              PixelColor p = dispView->colorAt(x-borderRight, y);
+              PixelColor dp = dimmedPixel(p, p.a);
+              chain->setColorXY(x, y, dp.r, dp.g, dp.b);
+            }
+          }
+          dispView->updated();
+        }
+        // update hardware (refresh actual LEDs, cleans away possible glitches
+        chain->show();
+      }
     }
   }
+  // latest possible update
+  return now+MAX_UPDATE_INTERVAL;
 }
 
 

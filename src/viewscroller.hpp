@@ -119,9 +119,10 @@ namespace p44 {
     virtual void clear() P44_OVERRIDE;
 
     /// calculate changes on the display, return time of next change
+    /// @param aPriorityUntil for views with local priority flag set, priority is valid until this time is reached
     /// @return Infinite if there is no immediate need to call step again, otherwise mainloop time of when to call again latest
     /// @note this must be called as demanded by return value, and after making changes to the view
-    virtual MLMicroSeconds step() P44_OVERRIDE;
+    virtual MLMicroSeconds step(MLMicroSeconds aPriorityUntil) P44_OVERRIDE;
 
     /// return if anything changed on the display since last call
     virtual bool isDirty() P44_OVERRIDE;

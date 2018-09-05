@@ -63,7 +63,7 @@ namespace p44 {
     void setText(const string aText);
     ErrorPtr installScene(JsonObjectPtr aSceneConfig);
     ErrorPtr reconfigure(const string aViewLabel, JsonObjectPtr aConfig);
-    void updateDisplay();
+    MLMicroSeconds updateDisplay();
 
     void setBackgroundColor(const PixelColor aColor);
     void setTextColor(const PixelColor aColor);

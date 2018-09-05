@@ -56,25 +56,21 @@ void ViewScroller::clear()
 }
 
 
-#define BUSYWAIT_TIME_TO_STEP (1*MilliSecond)
-
-MLMicroSeconds ViewScroller::step()
+MLMicroSeconds ViewScroller::step(MLMicroSeconds aPriorityUntil)
 {
-  MLMicroSeconds nextCall = inherited::step();
+  MLMicroSeconds now = MainLoop::now();
+  MLMicroSeconds nextChildCall = Infinite;
   if (scrolledView) {
-    MLMicroSeconds n = scrolledView->step();
-    if (nextCall<0 || (n>0 && n<nextCall)) {
-      nextCall = n;
-    }
+    nextChildCall = scrolledView->step(aPriorityUntil);
   }
   // scroll
+  MLMicroSeconds nextScrollCall = inherited::step(aPriorityUntil);
   if (scrollSteps!=0 && scrollStepInterval>0) {
     // scrolling
-    MLMicroSeconds now = MainLoop::now();
     MLMicroSeconds next = nextScrollStepAt-now; // time to next step
     if (next>0) {
-      if (nextCall<0 || nextScrollStepAt<nextCall) {
-        nextCall = nextScrollStepAt;
+      if (nextScrollCall<0 || nextScrollStepAt<nextScrollCall) {
+        nextScrollCall = nextScrollStepAt;
       }
     }
     else {
@@ -123,16 +119,24 @@ MLMicroSeconds ViewScroller::step()
         // advance to next step
         next += scrollStepInterval;
         nextScrollStepAt += scrollStepInterval;
-        if (nextCall<0 || nextScrollStepAt<nextCall) {
-          nextCall = nextScrollStepAt;
+        if (nextScrollCall<0 || nextScrollStepAt<nextScrollCall) {
+          nextScrollCall = nextScrollStepAt;
         }
         if (next<0) {
-          LOG(LOG_INFO, "ViewScroller: needs to catch-up steps -> call step() more often!");
+          LOG(LOG_DEBUG, "ViewScroller: needs to catch-up steps -> call step() more often!");
         }
       }
     }
+    // FIXME: give fast scrolling absolute priority
+    if (scrollStepInterval>100*MilliSecond) {
+      updateNextCall(nextScrollCall, nextChildCall, aPriorityUntil); // scrolling might have priority
+    }
+    return nextScrollCall;
   }
-  return nextCall;
+  else {
+    // not scrolling
+    return nextChildCall;
+  }
 }
 
 

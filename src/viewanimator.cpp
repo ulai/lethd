@@ -63,19 +63,12 @@ void ViewAnimator::pushStep(ViewPtr aView, MLMicroSeconds aShowTime, MLMicroSeco
 }
 
 
-MLMicroSeconds ViewAnimator::step()
+MLMicroSeconds ViewAnimator::step(MLMicroSeconds aPriorityUntil)
 {
-  MLMicroSeconds nextCall = inherited::step();
-  MLMicroSeconds n;
+  MLMicroSeconds nextCall = inherited::step(aPriorityUntil);
+  updateNextCall(nextCall, stepAnimation());
   if (currentStep<sequence.size()) {
-    n = sequence[currentStep].view->step();
-    if (nextCall<0 || (n>0 && n<nextCall)) {
-      nextCall = n;
-    }
-  }
-  n = stepAnimation();
-  if (nextCall<0 || (n>0 && n<nextCall)) {
-    nextCall = n;
+    updateNextCall(nextCall, sequence[currentStep].view->step(aPriorityUntil), aPriorityUntil); // stepping might have priority
   }
   return nextCall;
 }
@@ -153,7 +146,7 @@ MLMicroSeconds ViewAnimator::stepAnimation()
             return Infinite; // no need to call again for this animation
           }
         }
-        return 0; // call again immediately to initiate next step
+        return now; // call again immediately to initiate next step
     }
   }
   return Infinite;

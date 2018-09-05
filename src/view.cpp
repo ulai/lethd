@@ -43,6 +43,7 @@ View::View()
   alpha = 255; // but content pixels passed trough 1:1
   contentIsMask = false; // content color will be used
   targetAlpha = -1; // not fading
+  localTimingPriority = true;
 }
 
 
@@ -74,7 +75,20 @@ void View::clear()
 }
 
 
-MLMicroSeconds View::step()
+void View::updateNextCall(MLMicroSeconds &aNextCall, MLMicroSeconds aCallCandidate, MLMicroSeconds aPriorityUntil)
+{
+  if (localTimingPriority && aPriorityUntil>0 && aCallCandidate<aPriorityUntil) {
+    // within local priority time, candiate always looses
+    return;
+  }
+  if (aNextCall<=0 || (aCallCandidate>0 && aCallCandidate<aNextCall)) {
+    // candidate wins
+    aNextCall = aCallCandidate;
+  }
+}
+
+
+MLMicroSeconds View::step(MLMicroSeconds aPriorityUntil)
 {
   // check fading
   if (targetAlpha>=0) {
@@ -479,6 +493,9 @@ ErrorPtr View::configureView(JsonObjectPtr aViewConfig)
   }
   if (aViewConfig->get("sizetocontent", o)) {
     if(o->boolValue()) sizeFrameToContent();
+  }
+  if (aViewConfig->get("timingpriority", o)) {
+    localTimingPriority = o->boolValue();
   }
   return ErrorPtr();
 }

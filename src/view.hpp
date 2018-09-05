@@ -185,6 +185,7 @@ namespace p44 {
     int contentSizeY; ///< Y size of content (in content coordinates)
     WrapMode contentWrapMode; ///< content wrap mode
     bool contentIsMask; ///< if set, only alpha of content is used on foreground color
+    bool localTimingPriority; ///< if set, local timing should be prioritized
 
     #if ENABLE_VIEWCONFIG
     string label; ///< label of the view for addressing it
@@ -300,9 +301,17 @@ namespace p44 {
     virtual void clear();
 
     /// calculate changes on the display, return time of next change
+    /// @param aPriorityUntil for views with local priority flag set, priority is valid until this time is reached
     /// @return Infinite if there is no immediate need to call step again, otherwise mainloop time of when to call again latest
     /// @note this must be called as demanded by return value, and after making changes to the view
-    virtual MLMicroSeconds step();
+    virtual MLMicroSeconds step(MLMicroSeconds aPriorityUntil);
+
+    /// helper for determining time of next step call
+    /// @param aNextCall time of next call needed known so far, will be updated by candidate if conditions match
+    /// @param aCallCandidate time of next call to update aNextCall
+    /// @param aPriorityUntil if>0, current call time has priority when aCallCandidate is before aPrioritizeCurrentUntil
+    ///    even if aCallCandidate is before aNextCall
+    void updateNextCall(MLMicroSeconds &aNextCall, MLMicroSeconds aCallCandidate, MLMicroSeconds aPriorityUntil=0);
 
     /// return if anything changed on the display since last call
     virtual bool isDirty() { return dirty; };
