@@ -44,6 +44,7 @@ View::View()
   contentIsMask = false; // content color will be used
   targetAlpha = -1; // not fading
   localTimingPriority = true;
+  maskChildDirtyUntil = Never;
 }
 
 
@@ -75,11 +76,24 @@ void View::clear()
 }
 
 
-void View::updateNextCall(MLMicroSeconds &aNextCall, MLMicroSeconds aCallCandidate, MLMicroSeconds aPriorityUntil)
+bool View::reportDirtyChilds()
 {
-  if (localTimingPriority && aPriorityUntil>0 && aCallCandidate<aPriorityUntil) {
-    // within local priority time, candiate always looses
-    return;
+  if (maskChildDirtyUntil) {
+    if (MainLoop::now()<maskChildDirtyUntil) {
+      return false;
+    }
+    maskChildDirtyUntil = 0;
+  }
+  return true;
+}
+
+
+void View::updateNextCall(MLMicroSeconds &aNextCall, MLMicroSeconds aCallCandidate, MLMicroSeconds aCandidatePriorityUntil)
+{
+  if (localTimingPriority && aCandidatePriorityUntil>0 && aCallCandidate>=0 && aCallCandidate<aCandidatePriorityUntil) {
+    // children must not cause "dirty" before candidate time is over
+    MLMicroSeconds now = MainLoop::now();
+    maskChildDirtyUntil = (aCallCandidate-now)*2+now; // duplicate to make sure candidate execution has some time to happen BEFORE dirty is unblocked
   }
   if (aNextCall<=0 || (aCallCandidate>0 && aCallCandidate<aNextCall)) {
     // candidate wins

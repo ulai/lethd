@@ -77,9 +77,10 @@ DispPanel::~DispPanel()
 
 
 
-#define MAX_STEP_INTERVAL (1000*MilliSecond) // run a step at least once a second
-#define MAX_UPDATE_INTERVAL (500*MilliSecond) // send an update at least every half second
-#define MIN_UPDATE_INTERVAL (15*MilliSecond) // do not send updates faster than every 15ms
+#define MAX_STEP_INTERVAL (1000*MilliSecond) // run a step at least in this interval
+#define MAX_UPDATE_INTERVAL (500*MilliSecond) // send an update at least this often, even if no changes happen (LED refresh)
+#define MIN_UPDATE_INTERVAL (15*MilliSecond) // do not send updates faster than this
+#define MAX_PRIORITY_INTERVAL (50*MilliSecond) // allow synchronizing prioritized timing for this timespan after the last LED refresh
 
 
 MLMicroSeconds DispPanel::step()
@@ -87,7 +88,7 @@ MLMicroSeconds DispPanel::step()
   MLMicroSeconds nextCall = Infinite;
   if (dispView) {
     do {
-      nextCall = dispView->step(lastUpdate+3*MIN_UPDATE_INTERVAL);
+      nextCall = dispView->step(lastUpdate+MAX_PRIORITY_INTERVAL);
     } while (nextCall==0);
     MLMicroSeconds n = updateDisplay();
     if (nextCall<0 || (n>0 && n<nextCall)) {
@@ -201,7 +202,8 @@ ErrorPtr DispPanel::installScene(JsonObjectPtr aSceneConfig)
     }
     // get new contents view hierarchy
     err = p44::createViewFromConfig(aSceneConfig, contents);
-    if (!Error::isOK(err)) return err;
+    if (!Error::isOK(err))
+      return err;
     dispView->setScrolledView(contents);
   }
   return err;

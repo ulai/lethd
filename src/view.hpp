@@ -185,7 +185,8 @@ namespace p44 {
     int contentSizeY; ///< Y size of content (in content coordinates)
     WrapMode contentWrapMode; ///< content wrap mode
     bool contentIsMask; ///< if set, only alpha of content is used on foreground color
-    bool localTimingPriority; ///< if set, local timing should be prioritized
+    bool localTimingPriority; ///< if set, this view's timing requirements should be treaded with priority over child view's
+    MLMicroSeconds maskChildDirtyUntil; ///< if>0, child's dirty must not be reported until this time is reached
 
     #if ENABLE_VIEWCONFIG
     string label; ///< label of the view for addressing it
@@ -204,6 +205,18 @@ namespace p44 {
 
     /// set dirty - to be called by step() implementation when the view needs to be redisplayed
     void makeDirty() { dirty = true; };
+
+    /// @return if true, dirty childs should be reported
+    bool reportDirtyChilds();
+
+    /// helper for determining time of next step call
+    /// @param aNextCall time of next call needed known so far, will be updated by candidate if conditions match
+    /// @param aCallCandidate time of next call to update aNextCall
+    /// @param aCandidatePriorityUntil if set, this means the aCallCandidate must be prioritized when it is before the
+    ///   specified time (and the view is enabled for prioritized timing).
+    ///   Prioritizing means that reportDirtyChilds() returns false until aCallCandidate has passed, to
+    ///   prevent triggering display updates before the prioritized time.
+    void updateNextCall(MLMicroSeconds &aNextCall, MLMicroSeconds aCallCandidate, MLMicroSeconds aCandidatePriorityUntil = 0);
 
   public :
 
@@ -306,15 +319,8 @@ namespace p44 {
     /// @note this must be called as demanded by return value, and after making changes to the view
     virtual MLMicroSeconds step(MLMicroSeconds aPriorityUntil);
 
-    /// helper for determining time of next step call
-    /// @param aNextCall time of next call needed known so far, will be updated by candidate if conditions match
-    /// @param aCallCandidate time of next call to update aNextCall
-    /// @param aPriorityUntil if>0, current call time has priority when aCallCandidate is before aPrioritizeCurrentUntil
-    ///    even if aCallCandidate is before aNextCall
-    void updateNextCall(MLMicroSeconds &aNextCall, MLMicroSeconds aCallCandidate, MLMicroSeconds aPriorityUntil=0);
-
     /// return if anything changed on the display since last call
-    virtual bool isDirty() { return dirty; };
+    virtual bool isDirty()  { return dirty; };
 
     /// call when display is updated
     virtual void updated() { dirty = false; };

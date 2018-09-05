@@ -66,9 +66,9 @@ void ViewAnimator::pushStep(ViewPtr aView, MLMicroSeconds aShowTime, MLMicroSeco
 MLMicroSeconds ViewAnimator::step(MLMicroSeconds aPriorityUntil)
 {
   MLMicroSeconds nextCall = inherited::step(aPriorityUntil);
-  updateNextCall(nextCall, stepAnimation());
+  updateNextCall(nextCall, stepAnimation(), aPriorityUntil); // animation has priority
   if (currentStep<sequence.size()) {
-    updateNextCall(nextCall, sequence[currentStep].view->step(aPriorityUntil), aPriorityUntil); // stepping might have priority
+    updateNextCall(nextCall, sequence[currentStep].view->step(aPriorityUntil));
   }
   return nextCall;
 }
@@ -167,7 +167,7 @@ void ViewAnimator::startAnimation(bool aRepeat, SimpleCB aCompletedCB)
 bool ViewAnimator::isDirty()
 {
   if (inherited::isDirty()) return true; // dirty anyway
-  return currentView ? currentView->isDirty() : false; // dirty if currently active view is dirty
+  return currentView && reportDirtyChilds() ? currentView->isDirty() : false;
 }
 
 

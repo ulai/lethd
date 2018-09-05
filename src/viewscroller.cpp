@@ -59,19 +59,16 @@ void ViewScroller::clear()
 MLMicroSeconds ViewScroller::step(MLMicroSeconds aPriorityUntil)
 {
   MLMicroSeconds now = MainLoop::now();
-  MLMicroSeconds nextChildCall = Infinite;
+  MLMicroSeconds nextCall = inherited::step(aPriorityUntil);
   if (scrolledView) {
-    nextChildCall = scrolledView->step(aPriorityUntil);
+    updateNextCall(nextCall, scrolledView->step(aPriorityUntil));
   }
   // scroll
-  MLMicroSeconds nextScrollCall = inherited::step(aPriorityUntil);
   if (scrollSteps!=0 && scrollStepInterval>0) {
     // scrolling
     MLMicroSeconds next = nextScrollStepAt-now; // time to next step
     if (next>0) {
-      if (nextScrollCall<0 || nextScrollStepAt<nextScrollCall) {
-        nextScrollCall = nextScrollStepAt;
-      }
+      updateNextCall(nextCall, nextScrollStepAt, aPriorityUntil); // scrolling has priority
     }
     else {
       // execute all step(s) pending
@@ -119,31 +116,21 @@ MLMicroSeconds ViewScroller::step(MLMicroSeconds aPriorityUntil)
         // advance to next step
         next += scrollStepInterval;
         nextScrollStepAt += scrollStepInterval;
-        if (nextScrollCall<0 || nextScrollStepAt<nextScrollCall) {
-          nextScrollCall = nextScrollStepAt;
-        }
+        updateNextCall(nextCall, nextScrollStepAt, aPriorityUntil); // scrolling has priority
         if (next<0) {
           LOG(LOG_DEBUG, "ViewScroller: needs to catch-up steps -> call step() more often!");
         }
-      }
+      } // while catchup
     }
-    // FIXME: give fast scrolling absolute priority
-    if (scrollStepInterval>100*MilliSecond) {
-      updateNextCall(nextScrollCall, nextChildCall, aPriorityUntil); // scrolling might have priority
-    }
-    return nextScrollCall;
   }
-  else {
-    // not scrolling
-    return nextChildCall;
-  }
+  return nextCall;
 }
 
 
 bool ViewScroller::isDirty()
 {
   if (inherited::isDirty()) return true; // dirty anyway
-  if (scrolledView) return scrolledView->isDirty();
+  if (scrolledView && reportDirtyChilds()) return scrolledView->isDirty();
   return false;
 }
 

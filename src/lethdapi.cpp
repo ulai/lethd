@@ -90,8 +90,8 @@ void LethdApi::apiRequestHandler(JsonCommPtr aConnection, ErrorPtr aError, JsonO
     ApiRequestPtr req = ApiRequestPtr(new LethdApiRequest(aRequest, aConnection));
     aError = processRequest(req);
   }
-  else {
-    // error from connection level (e.g. JSON syntax)
+  if (!Error::isOK(aError)) {
+    // error
     JsonObjectPtr resp = JsonObject::newObj();
     resp->add("Error", JsonObject::newString(aError->description()));
     aConnection->sendMessage(resp);
