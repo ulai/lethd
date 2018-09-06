@@ -119,6 +119,8 @@ lethd_SOURCES = \
   src/p44utils/p44utils_common.hpp \
   src/viewfactory.cpp \
   src/viewfactory.hpp \
+  src/lifeview.cpp \
+  src/lifeview.hpp \
   src/view.cpp \
   src/view.hpp \
   src/textview.cpp \

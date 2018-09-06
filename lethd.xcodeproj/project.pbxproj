@@ -15,6 +15,7 @@
 		ED34E4042125598B006F286C /* neuron.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED34E3FE2125598B006F286C /* neuron.cpp */; };
 		ED34E4052125598B006F286C /* lethdapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED34E4012125598B006F286C /* lethdapi.cpp */; };
 		ED34E40821255A71006F286C /* dispmatrix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED34E40621255A70006F286C /* dispmatrix.cpp */; };
+		ED45FF002141380D002C6E7A /* lifeview.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED45FEFE2141380C002C6E7A /* lifeview.cpp */; };
 		ED50D72C211F4914006D75A6 /* viewscroller.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED50D72A211F4914006D75A6 /* viewscroller.cpp */; };
 		ED53729B1DFC2CBE0066FF5A /* application.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED5372671DFC2CBE0066FF5A /* application.cpp */; };
 		ED53729C1DFC2CBE0066FF5A /* colorutils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ED5372691DFC2CBE0066FF5A /* colorutils.cpp */; };
@@ -89,6 +90,8 @@
 		ED34E4012125598B006F286C /* lethdapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = lethdapi.cpp; sourceTree = "<group>"; };
 		ED34E40621255A70006F286C /* dispmatrix.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = dispmatrix.cpp; sourceTree = "<group>"; };
 		ED34E40721255A71006F286C /* dispmatrix.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = dispmatrix.hpp; sourceTree = "<group>"; };
+		ED45FEFE2141380C002C6E7A /* lifeview.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = lifeview.cpp; sourceTree = "<group>"; };
+		ED45FEFF2141380D002C6E7A /* lifeview.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = lifeview.hpp; sourceTree = "<group>"; };
 		ED50D72A211F4914006D75A6 /* viewscroller.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = viewscroller.cpp; sourceTree = "<group>"; };
 		ED50D72B211F4914006D75A6 /* viewscroller.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = viewscroller.hpp; sourceTree = "<group>"; };
 		ED50D72D211F522B006D75A6 /* imageview.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = imageview.cpp; sourceTree = "<group>"; };
@@ -219,6 +222,8 @@
 			isa = PBXGroup;
 			children = (
 				ED5372661DFC2C6D0066FF5A /* p44utils */,
+				ED45FEFE2141380C002C6E7A /* lifeview.cpp */,
+				ED45FEFF2141380D002C6E7A /* lifeview.hpp */,
 				ED7108ED210E106700A9B57C /* textview.cpp */,
 				ED7108EA210E106700A9B57C /* textview.hpp */,
 				EDA91F18213DC15B00136117 /* viewfactory.cpp */,
@@ -427,6 +432,7 @@
 				ED5372B01DFC2CBE0066FF5A /* socketcomm.cpp in Sources */,
 				ED19DD0820F793030012DE7E /* lethd_main.cpp in Sources */,
 				ED5372A41DFC2CBE0066FF5A /* iopin.cpp in Sources */,
+				ED45FF002141380D002C6E7A /* lifeview.cpp in Sources */,
 				ED5372B11DFC2CBE0066FF5A /* spi.cpp in Sources */,
 				ED5372AD1DFC2CBE0066FF5A /* persistentparams.cpp in Sources */,
 				ED5372A71DFC2CBE0066FF5A /* jsonrpccomm.cpp in Sources */,

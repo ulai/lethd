@@ -28,6 +28,7 @@
 #include "viewanimator.hpp"
 #include "viewstack.hpp"
 #include "viewscroller.hpp"
+#include "lifeview.hpp"
 
 using namespace p44;
 
@@ -52,6 +53,9 @@ ErrorPtr p44::createViewFromConfig(JsonObjectPtr aViewConfig, ViewPtr &aNewView)
     }
     else if (vt=="scroller") {
       aNewView = ViewPtr(new ViewScroller);
+    }
+    else if (vt=="life") {
+      aNewView = ViewPtr(new LifeView);
     }
     else {
       return TextError::err("unknown view type '%s'", vt.c_str());
