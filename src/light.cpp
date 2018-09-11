@@ -97,10 +97,13 @@ void Light::initOperation()
 void Light::fade(double aFrom, double aTo, MLMicroSeconds aFadeTime, MLMicroSeconds aStartTime)
 {
   if(fabs(aFrom - aTo) < 1e-4) return;
-  currentValue = aFrom;
-  to = aTo;
-  dv = (aTo - aFrom) / (aFadeTime / dt);
-  ticket.executeOnceAt(boost::bind(&Light::update, this, _1), aStartTime);
+  if (aTo!=currentValue || (aFrom!=currentValue && aFadeTime>0)) {
+    currentValue = aFrom;
+    to = aTo;
+    MLMicroSeconds numSteps = aFadeTime / dt;
+    dv = (aTo - aFrom) / (numSteps>0 ? numSteps : 1);
+    ticket.executeOnceAt(boost::bind(&Light::update, this, _1), aStartTime);
+  }
 }
 
 void Light::update(MLTimer &aTimer)
