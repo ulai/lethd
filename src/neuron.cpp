@@ -140,6 +140,7 @@ void Neuron::start(double aMovingAverageCount, double aThreshold,int aNumAxonLed
 
 void Neuron::fire(double aValue)
 {
+  LOG(LOG_INFO, "neuron fires with avg=%f", aValue);
   if(axonState == AxonFiring) return;
   neuronSpike(aValue);
   pos = 0;
