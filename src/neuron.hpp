@@ -63,6 +63,9 @@ namespace p44 {
 
     int pos = 0;
     double phi = 0;
+    double glowBrightness = 1;
+
+    bool isMuted = false;
 
   public:
 
@@ -92,6 +95,8 @@ namespace p44 {
     void animateBody(MLTimer &aTimer);
 
     ErrorPtr fire(ApiRequestPtr aRequest);
+    ErrorPtr glow(ApiRequestPtr aRequest);
+    ErrorPtr mute(ApiRequestPtr aRequest);
 
   };
 
